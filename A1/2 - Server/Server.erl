@@ -50,3 +50,4 @@ currentTimeInSec() ->
     ((MegaSecs*1000000 + Secs)*1000000 + MicroSecs) / 1000000
 .
     
+terminate(normal,state) -> ok.

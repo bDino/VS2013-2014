@@ -7,9 +7,17 @@ start() ->
     HoldBackQueu = orddict:new(),
     DeliveryQueue = orddict:new(),
     
-    loop()
+    loop(HoldBackQueu,DeliveryQueue)
 .
 
+%TODO: TimeStamp für HBQ und DLQ
+loop(HBQ,DLQ) -> 
+
+    receive
+        {dropmessage, {Message, Number}} -> 
+            NewHBQ = orddict:store(Number,Message,HBQ);
+    end
+.
     
     
     
