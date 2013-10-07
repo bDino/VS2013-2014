@@ -2,7 +2,6 @@
 -author("Milena Dreier, Dino Buskulic").
 -export([start/0]).
 -import(werkzeug,[get_config_value/2,logging/2,logstop/0,timeMilliSecond/0]).
--define(SERVERLOG,"server.log").
 
 start() ->
 %Speichern der Configparameter
@@ -14,8 +13,8 @@ start() ->
 %Configugration fertig
 
 %Serverkomponenten initialisieren
-    %QeuemanagerPID = spawn(fun() -> queuemanager:start() end).
-    ClientmanagerPID = spawn(clientmanager:start(Clientlifetime,self(),self())),
+    QeuemanagerPID = spawn(fun() -> queuemanager:start(DlqLimit) end),
+    ClientmanagerPID = spawn(clientmanager:start(Clientlifetime,QeuemanagerPID,self())),
     ServerPID = spawn(fun() -> loop(ClientmanagerPID,0) end),
     
     register(Servername,self()),
@@ -26,12 +25,12 @@ start() ->
 loop(CManager,MessageNumber) ->
     receive
         {getmsgid, ClientPID} -> 
-            logging(SERVERLOG,io:format("~p : Server: Received getmsgid:~p ! ~p\n" ,[now(),ClientPID])),
+            logging("server.log",io:format("~p : Server: Received getmsgid:~p ! ~p\n" ,[now(),ClientPID])),
             ClientPID ! {nnr,MessageNumber},
             loop(CManager,MessageNumber + 1);
 
         {getmessages,ClientPID} ->
-            logging(SERVERLOG,io:format("~p : Server: Received getmessages:~p ! ~p\n" ,[now(),ClientPID])),
+            logging("server.log",io:format("~p : Server: Received getmessages:~p ! ~p\n" ,[now(),ClientPID])),
             CManager ! {getmessages, ClientPID},
             receive
                 {Message,MsgId,Terminated} ->
@@ -41,7 +40,7 @@ loop(CManager,MessageNumber) ->
             loop(CManager,MessageNumber); %Wieder in den Loop springen
         
         {dropmessage, {Nachricht, Nr}} -> 
-            logging(SERVERLOG,io:format("~p : Server: Received dropmessages:~p ! ~p\n" ,[now(),Nachricht]))
+            logging("server.log",io:format("~p : Server: Received dropmessages:~p ! ~p\n" ,[now(),Nachricht]))
             
     end
 .
