@@ -38,7 +38,7 @@ getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID) ->
 		{Message, NewMsgId, Terminated} ->
 		    {MsgId, NewTimestamp} = orddict:fetch(ClientId, NewClientList),
 			ClientListWithNewMsgId = orddict:store(ClientId, {NewMsgId, NewTimestamp}, NewClientList),
-			ServerPID ! {Message, MsgId, Terminated}
+			ServerPID ! {Message, NewMsgId, Terminated}
 	end,
 			
 	run(ClientListWithNewMsgId, ClientLifetime, QueueManagerPID, ServerPID)
