@@ -30,7 +30,7 @@ startEditor(ClientLog,Server,SentMsg,NumberList,FirstTimeout) ->
                 logging(ClientLog, io:format("Received next Message Number: ~p\n",[Number])),
                 NewList = lists:append(Number,NumberList),
 
-                Server ! {dropmessage, {io:format("~pte Nachricht C out: ~p.",[Number,now()])}},
+                Server ! {dropmessage, {io:format("~p : ~pte Nachricht C out: ~p.",[self(),Number,now()])}},
         
                     case (sentMsg = 5) of 
                         true ->

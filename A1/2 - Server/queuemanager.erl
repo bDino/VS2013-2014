@@ -14,8 +14,9 @@ start(DLQCapacity) ->
 loop(HBQ,DLQ, DLQCapacity) -> 
 
     receive
-        {dropmessage, {Message, Number}} -> 
-            NewHBQ = orddict:store(Number,Message,HBQ),
+        {dropmessage, {Message, Number}} ->
+            ModifiedMsg = io:format("~p HBQ in : ~p",[Message,now()]),
+            NewHBQ = orddict:store(Number,ModifiedMsg,HBQ),
             case checkIfEnoughMessages(NewHBQ, DLQCapacity) of
             	true -> transportToDLQ(NewHBQ, DLQ, DLQCapacity);
             	false -> loop(HBQ,DLQ, DLQCapacity)
@@ -55,7 +56,8 @@ transport(HBQ, DLQ, DLQCapacity) ->
 	Element = orddict:fetch(Head, HBQ),
 	orddict:erase(Head, HBQ),
 	ReadyDLQ = deleteIfFull(DLQ, DLQCapacity),
-	NewDLQ = orddict:store(Head, Element, ReadyDLQ),
+        ModifiedMsg = io:format("~p DLQ in : ~p",[Element,now()]),
+	NewDLQ = orddict:store(Head, ModifiedMsg, ReadyDLQ),
 	
 	transport(Tail, NewDLQ, Head, DLQCapacity)
 .
