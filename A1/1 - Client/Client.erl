@@ -30,7 +30,7 @@ startEditor(ClientLog,Server,SentMsg,NumberList,FirstTimeout) ->
                 logging(ClientLog, io:format("Received next Message Number: ~p\n",[Number])),
                 NewList = lists:append(Number,NumberList),
 
-                Server ! {dropmessage, {io:format("~p : ~pte Nachricht C out: ~p.",[self(),Number,now()])}},
+                Server ! {dropmessage, {io:format("~p : ~pte Nachricht C out: ~p.",[self(),Number,timeMilliSecond()])}},
         
                     case (sentMsg = 5) of 
                         true ->
@@ -54,13 +54,13 @@ startReader(NumberOfMessages,Server,NumberList,ClientLog) when (NumberOfMessages
     receive
         {reply,Number,Nachricht,Terminated} ->
             case (lists:member(Number,NumberList)) of 
-                true -> logging(ClientLog,io:format("~p ******* C in: ~p\n",[Nachricht,now()]));
+                true -> logging(ClientLog,io:format("~p ******* C in: ~p\n",[Nachricht,timeMilliSecond()]));
                 false -> logging(ClientLog,io:format("~p C in: ~p\n",[Number,Nachricht]))
             end,
             
             case (Terminated = false) of
                 true -> startReader(NumberOfMessages,Server,NumberList,ClientLog);
-                false -> ok.
+                false -> ok
             end
     end
 .

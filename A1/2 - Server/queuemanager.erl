@@ -15,12 +15,14 @@ loop(HBQ,DLQ, DLQCapacity) ->
 
     receive
         {dropmessage, {Message, Number}} ->
-            ModifiedMsg = io:format("~p HBQ in : ~p",[Message,now()]),
+            ModifiedMsg = io:format("~p HBQ in : ~p",[Message,timeMilliSecond()]),
+            logging("server.log",ModifiedMsg),
             NewHBQ = orddict:store(Number,ModifiedMsg,HBQ),
+            
             case checkIfEnoughMessages(NewHBQ, DLQCapacity) of
             	true -> transportToDLQ(NewHBQ, DLQ, DLQCapacity);
             	false -> loop(HBQ,DLQ, DLQCapacity)
-            end
+            end;
             
         {getmessagesbynumber, LastMsgId, ClientManagerId} ->
        		KeyList = orddict:fetch_keys(DLQ),	
@@ -46,14 +48,14 @@ getmessagenumber(LastMsgId, DLQ, LastNumber) ->
 	
 	case (NewMsgId < LastNumber) of
 		true ->
-			case (NewMsgId < LastNumber + 1) of
-				true -> Terminated = false
-				
-				false -> 
-	case (orddict:is_key(NewMsgId, DLQ) andalso LastNumber > NewMsgId of
-        	true -> NewMsgId;
-        	false -> getmessagenumber(NewMsgId, DLQ);
-    end
+                    case (NewMsgId < LastNumber + 1) of
+                            true -> 
+                                Terminated = false;
+                            false -> 
+                                case (orddict:is_key(NewMsgId, DLQ) andalso (LastNumber > NewMsgId)) of
+                                        true -> NewMsgId;
+                                        false -> getmessagenumber(NewMsgId, DLQ);
+                                end
     
 	case LastNumber == NewMsgId of
 		true -> 
@@ -92,7 +94,8 @@ transport(HBQ, DLQ, DLQCapacity) ->
 	Element = orddict:fetch(Head, HBQ),
 	orddict:erase(Head, HBQ),
 	ReadyDLQ = deleteIfFull(DLQ, DLQCapacity),
-        ModifiedMsg = io:format("~p DLQ in : ~p",[Element,now()]),
+        ModifiedMsg = io:format("~p DLQ in : ~p",[Element,timeMilliSecond()]),
+        logging("server.log",ModifiedMsg),
 	NewDLQ = orddict:store(Head, ModifiedMsg, ReadyDLQ),
 	
 	transport(Tail, NewDLQ, Head, DLQCapacity)
