@@ -5,6 +5,8 @@
 
 %%Syntax Eintrag ClientList: ClientId, {LastMsgId, Timestamp}
 
+%%TODO: Client vergessen!
+
 start(ClientLifetime, QueueManagerPID, ServerPID) ->
 	ClientList = orddict:new(),
 	run(ClientList, ClientLifetime, QueueManagerPID, ServerPID)

@@ -21,9 +21,45 @@ loop(HBQ,DLQ, DLQCapacity) ->
             	true -> transportToDLQ(NewHBQ, DLQ, DLQCapacity);
             	false -> loop(HBQ,DLQ, DLQCapacity)
             end
+            
+        {getmessagesbynumber, LastMsgId, ClientManagerId} ->
+       		KeyList = orddict:fetch_keys(DLQ),	
+       		LastNumber = lists:last(KeyList), 
+       		
+       		case (LastMsgId < LastNumber) of
+				true -> MessageNumber = getmessagenumber(LastMsgId, DLQ, LastNumber),
+						Message = orddict:fetch(MessageNumber, DLQ),
+						case (MessageNumber < LastNumber) of 
+							true -> Terminated = false;
+							false -> Terminated = true
+						end;	
+				false -> Message = "Nichtleere Dummy Nachricht",
+						 Terminated = true,
+						 MessageNumber = LastMsgId
+			end,
+        	ClientManagerId ! {Message, MessageNumber, Terminated}
     end
 .
+  
+getmessagenumber(LastMsgId, DLQ, LastNumber) ->
+	NewMsgId = LastMsgId +1,
+	
+	case (NewMsgId < LastNumber) of
+		true ->
+			case (NewMsgId < LastNumber + 1) of
+				true -> Terminated = false
+				
+				false -> 
+	case (orddict:is_key(NewMsgId, DLQ) andalso LastNumber > NewMsgId of
+        	true -> NewMsgId;
+        	false -> getmessagenumber(NewMsgId, DLQ);
+    end
     
+	case LastNumber == NewMsgId of
+		true -> 
+.
+
+	 
 
 checkIfEnoughMessages(HBQ, DLQCapacity) ->
 	Length = orddict:length(HBQ),
@@ -32,7 +68,7 @@ checkIfEnoughMessages(HBQ, DLQCapacity) ->
 
 
 transportToDLQ(HBQ, DLQ, DLQCapacity) ->
-	KeyList = orddict:fetch_key(DLQ),
+	KeyList = orddict:fetch_keys(DLQ),
 	LastKey = list:last(KeyList),
 	NewKey = LastKey+1,
 	case orddict:is_key(NewKey, HBQ) of
@@ -42,7 +78,7 @@ transportToDLQ(HBQ, DLQ, DLQCapacity) ->
 .
 	
 fillOffset(HBQ, DLQ, NewKey, DLQCapacity) ->
-	[Head|Tail] = orddict:fetch_key(HBQ),
+	[Head|Tail] = orddict:fetch_keys(HBQ),
 	Message = io:format("***Fehlernachricht fuer Nachrichtennummern ~p bis ~p um 16.05 18:01:30,580",[NewKey,Head-1]),
 	ReadyDLQ = deleteIfFull(DLQ, DLQCapacity),
 	NewDLQ = orddict:store(Head-1, Message, ReadyDLQ),
@@ -51,7 +87,7 @@ fillOffset(HBQ, DLQ, NewKey, DLQCapacity) ->
 
 
 transport(HBQ, DLQ, DLQCapacity) ->
-	KeyList = orddict:fetch_key(HBQ),
+	KeyList = orddict:fetch_keys(HBQ),
 	[Head|Tail] = KeyList,
 	Element = orddict:fetch(Head, HBQ),
 	orddict:erase(Head, HBQ),
@@ -63,7 +99,7 @@ transport(HBQ, DLQ, DLQCapacity) ->
 .
 
 transport(HBQ, DLQ, LastHead, DLQCapacity) ->
-	[Head|Tail] = orddict:fetch_key(HBQ),
+	[Head|Tail] = orddict:fetch_keys(HBQ),
 	case Head = (LastHead+1) of
 		true -> Element = orddict:fetch(Head, HBQ),
 				orddict:erase(Head, HBQ),
