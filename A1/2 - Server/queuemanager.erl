@@ -19,6 +19,7 @@ loop(HBQ,DLQ, DLQCapacity) ->
             ModifiedMsg = io:format("~p HBQ in : ~p",[Message,timeMilliSecond()]),
             logging("server.log",ModifiedMsg),
             NewHBQ = orddict:store(Number,ModifiedMsg,HBQ),
+            
             case checkIfEnoughMessages(NewHBQ, DLQCapacity) of
             	true -> transportToDLQ(NewHBQ, DLQ, DLQCapacity);
             	false -> loop(HBQ,DLQ, DLQCapacity)

@@ -1,7 +1,7 @@
 -module(clientmanager).
 -author("Milena Dreier, Dino Buskulic").
 -export([start/3]).
-%%-import(werkzeug, [get_config_value/2, logging/2, logstop/0, timeMilliSecond/0]).
+-import(werkzeug, [get_config_value/2, logging/2, logstop/0, timeMilliSecond/0]).
 
 %%Syntax Eintrag ClientList: ClientId, {LastMsgId, Timestamp}
 
@@ -65,9 +65,9 @@ updateClientList([{CurrentClientId ,{lastMsgId, Timestamp}} | Tail], ClientLifet
 
 
 addClient(ClientId, LastMsgId, ClientList) ->
-	io:fwrite("Client mit ClientID ~p, LastMsgId ~p und Timestamp ~p soll zur Clientliste hinzugefügt werden\n", [ClientId, LastMsgId, TimeMilliSecond()]),
-	io:fwrite("Clientliste: ~p\n", [Clientlist]),
-	newList = orddict:store(ClientId, {LastMsgId, currentTimeInSec()}, ClientList)
+	io:fwrite("Client mit ClientID ~p, LastMsgId ~p und Timestamp ~p soll zur Clientliste hinzugefügt werden\n", [ClientId, LastMsgId, timeMilliSecond()]),
+	io:fwrite("Clientliste: ~p\n", [ClientList]),
+	orddict:store(ClientId, {LastMsgId, currentTimeInSec()}, ClientList)
 .	
 
 
