@@ -58,8 +58,9 @@ startReader(NumberOfMessages,Server,NumberList,ClientLog) when (NumberOfMessages
                 false -> logging(ClientLog,io:format("~p C in: ~p\n",[Number,Nachricht]))
             end,
             
-            case (Terminated = true) of
-                false -> startReader(NumberOfMessages,Server,NumberList,ClientLog)
+            case (Terminated = false) of
+                true -> startReader(NumberOfMessages,Server,NumberList,ClientLog);
+                false -> ok.
             end
     end
 .
