@@ -44,19 +44,10 @@ loop(HBQ,DLQ, DLQCapacity) ->
 getmessagenumber(LastMsgId, DLQ, LastNumber) ->
 	NewMsgId = LastMsgId +1,
 	
-	case (NewMsgId < LastNumber) of
-		true ->
-			case (NewMsgId < LastNumber + 1) of
-				true -> Terminated = false
-				
-				false -> 
-	case (orddict:is_key(NewMsgId, DLQ) andalso LastNumber > NewMsgId of
+	case (orddict:is_key(NewMsgId, DLQ) of
         	true -> NewMsgId;
         	false -> getmessagenumber(NewMsgId, DLQ);
     end
-    
-	case LastNumber == NewMsgId of
-		true -> 
 .
 
 	 
