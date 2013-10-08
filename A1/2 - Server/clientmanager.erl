@@ -71,7 +71,8 @@ updateClientList(ClientList, ClientLifetime) -> updateClientList(ClientList, Cli
 % ------
 updateClientList([],_,List) -> List;
 
-updateClientList([{CurrentClientId, {lastMsgId, Timestamp}}], ClientLifetime, List) ->
+updateClientList([{CurrentClientId, Value}], ClientLifetime, List) ->
+		{lastMsgId, Timestamp} = Value,
         Lifetime = currentTimeInSec()-Timestamp,
 	case (Lifetime > ClientLifetime) of
 		true -> NewList = List;

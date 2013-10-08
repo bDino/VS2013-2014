@@ -3,6 +3,14 @@
 -export([start/0]).
 -import(werkzeug,[get_config_value/2,logging/2,logstop/0,timeMilliSecond/0]).
 
+%% -------------------------------------------
+% Server
+%% -------------------------------------------
+%%
+%% -------------------------------------------
+%% startet den Server
+%% liest die Config-Datei aus und startet die Prozesse Queuemanager und Clientmanager
+%
 start() ->
 %Speichern der Configparameter
     {ok, Configlist} = file:consult("server.cfg"),
@@ -10,26 +18,29 @@ start() ->
     %{ok, Lifetime} = get_config_value(lifetime,Configlist),
     {ok, DlqLimit} = get_config_value(dlqlimit,Configlist),
     {ok, Clientlifetime} = get_config_value(clientlifetime,Configlist),
-%Configugration fertig
+%Configuration fertig
 
 %Serverkomponenten initialisieren
-    QueuemanagerPID = spawn(fun() -> queuemanager:start(DlqLimit) end),
-    ClientmanagerPID = spawn(fun() -> clientmanager:start(Clientlifetime,QueuemanagerPID,self()) end),
-    ServerPID = spawn(fun() -> loop(ClientmanagerPID,QueuemanagerPID,0) end),
+    QueuemanagerPID = spawn_link(fun() -> queuemanager:start(DlqLimit) end),
+    ClientmanagerPID = spawn_link(fun() -> clientmanager:start(Clientlifetime,QueuemanagerPID,self()) end),
+    %ServerPID = spawn(fun() -> loop(ClientmanagerPID,QueuemanagerPID,0) end),
 
     
-    logging("server.log","...Queuemanager started...\n"),
-    logging("server.log","...Clientmanager started...\n"),
+    logging("server.log",io:format("...Queuemanager started with PID ~p...\n", [QueuemanagerPID])),
+    logging("server.log",io:format("...Clientmanager started with PID ~p...\n", [ClientmanagerPID])),
     
     register(Servername,ServerPID),
+    logging("server.log",io:format("...Server started and registered with Servername ~p and PID ~p...\n", [Servername, ServerPID])),
     
-    logging("server.log","...Server started and registered...\n"),
+    loop(ClientmanagerPID,QueuemanagerPID,0, Lifetime),
     
-    ServerPID
+    self()
 .
 
 
-loop(CManager,QManager,MessageNumber) ->
+%% -------------------------------------------
+%% loop-Funktion behandelt eingehende Nachrichten und wird immer wieder aufgerufen
+loop(CManager,QManager,MessageNumber, Lifetime) ->
     receive
         {getmsgid, ClientPID} -> 
             logging("server.log",io:format("~p : Server: Received getmsgid: ~p ! ~p\n" ,[timeMilliSecond(),ClientPID,MessageNumber])),
@@ -51,7 +62,11 @@ loop(CManager,QManager,MessageNumber) ->
             logging("server.log",io:format("~p : Server: Received dropmessages:~p\n" ,[timeMilliSecond(),Nachricht])),
             QManager ! {dropmessage, {Nachricht, Nr}},
         
-            loop(CManager,QManager,MessageNumber)
+            loop(CManager,QManager,MessageNumber);
+    after 
+    	Lifetime ->
+    		logging("server.log",io:format("Lifetime ~p is over. Server ~p terminates" ,[Lifetime,self()]))
+    		exit("Lifetime is over")
     end
 .
     
