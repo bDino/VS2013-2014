@@ -13,16 +13,15 @@ start() ->
 %Configugration fertig
 
 %Serverkomponenten initialisieren
-    io:fwrite("...Server started vor Spawn..."),
     QueuemanagerPID = spawn(fun() -> queuemanager:start(DlqLimit) end),
     ClientmanagerPID = spawn(fun() -> clientmanager:start(Clientlifetime,QueuemanagerPID,self()) end),
     ServerPID = spawn(fun() -> loop(ClientmanagerPID,QueuemanagerPID,0) end),
-    io:fwrite("...Server started nach Spawn..."),
+
     
     logging("server.log","...Queuemanager started..."),
     logging("server.log","...Clientmanager started..."),
     
-    register(Servername,self()),
+    register(Servername,ServerPID),
     
     logging("server.log","...Server started and registered..."),
     
@@ -31,7 +30,6 @@ start() ->
 
 
 loop(CManager,QManager,MessageNumber) ->
-    io:fwrite("...Server started..."),
     receive
         {getmsgid, ClientPID} -> 
             logging("server.log",io:format("~p : Server: Received getmsgid: ~p ! ~p\n" ,[timeMilliSecond(),ClientPID,MessageNumber])),

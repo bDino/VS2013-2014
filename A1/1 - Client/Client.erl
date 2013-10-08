@@ -3,7 +3,7 @@
 -export([start/1]).
 -import(werkzeug,[get_config_value/2,logging/2,logstop/0,timeMilliSecond/0,delete_last/1,shuffle/1,reset_timer/3,type_is/1,to_String/1,bestimme_mis/2]).
 
-start(ServerPID) ->
+start(ServerNode) ->
     {ok, ConfigListe} = file:consult("client.cfg"),
     {ok, Lifetime} = get_config_value(lifetime, ConfigListe),
     {ok, Servername} = get_config_value(servername, ConfigListe),
@@ -12,35 +12,44 @@ start(ServerPID) ->
     
     FirstTimeout = 2000 + random:uniform(2000),
     NumberList = [],
-    Server = {ServerPID,Servername},
     
-    spawnAllClients(Clients,Server,NumberList,FirstTimeout,Lifetime)
-.
+    %case net_adm:ping(ServerNode) of
+        % We received an answer from the server-node.
+     %   pong -> ServerPid = Servername,
+
+            % Start the number of clients specified in the config file.
+            spawnAllClients(Clients,ServerNode,NumberList,FirstTimeout,Lifetime)
+
+        % The server-node failed to answer :(.
+      %  pang -> io:format("A connection to the server could not be established :(. \n")
+    %end
+.    
+    
 
 spawnAllClients(ClientNumber,Server,NumberList,FirstTimeout,ClientLifetime) when (ClientNumber > 0) ->
-    io:fwrite("...Client ~p tries to start...",[ClientNumber]),
     ClientPID = spawn(fun() -> startEditor(io:format("Client ~p.log",[ClientNumber]),Server,0,NumberList,FirstTimeout) end),
     timer:kill_after(ClientLifetime * 1000,ClientPID),
     spawnAllClients(ClientNumber - 1,Server,NumberList,FirstTimeout,ClientLifetime)
 .
 
 startEditor(ClientLog,Server,SentMsg,NumberList,FirstTimeout) ->
-    logging(ClientLog,"...Client started..."),
-    Server ! {getmsgid, self()},
+    Server ! {getmsgid, self()},        
         receive
-            {nid, Number} -> 
+            {nnr, Number} -> 
+            
                 logging(ClientLog, io:format("Received next Message Number: ~p\n",[Number])),
-                NewList = lists:append(Number,NumberList),
-
-                Server ! {dropmessage, {io:format("~p : ~pte Nachricht C out: ~p.",[self(),Number,timeMilliSecond()])}},
+                NewList = [Number|NumberList],
         
-                    case (sentMsg = 5) of 
+                    case (SentMsg == 5) of 
                         true ->
                             logging(ClientLog,io:format("Forgott to send Message Number: ~p\n",[Number])),
-                            timer:sleep(2000 + random:uniform(3000)),
-            
+                            SleepTime = 2000 + random:uniform(3000),
+                            logging(ClientLog,io:format("Set Client to Sleep: ~p\n",[SleepTime])),
+                            timer:sleep(SleepTime),
+                            
                             startReader(0,Server,NumberList,ClientLog);
                         false ->
+                            Server ! {dropmessage, {io:format("~p : ~pte Nachricht C out: ~p.\n",[self(),Number,timeMilliSecond()])}},
                             startEditor(ClientLog,Server,SentMsg + 1,NewList,FirstTimeout)
                     end;
     
@@ -51,6 +60,7 @@ startEditor(ClientLog,Server,SentMsg,NumberList,FirstTimeout) ->
 
 
 startReader(NumberOfMessages,Server,NumberList,ClientLog) when (NumberOfMessages < 5) ->
+    logging(ClientLog,io:format("Started Reader Mod: ~p\n",[timeMilliSecond()])),
     Server ! {getmessages, self()},
     
     receive
