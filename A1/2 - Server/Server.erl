@@ -7,47 +7,53 @@ start() ->
 %Speichern der Configparameter
     {ok, Configlist} = file:consult("server.cfg"),
     {ok, Servername} = get_config_value(servername,Configlist),
-    {ok, Lifetime} = get_config_value(lifetime,Configlist),
+    %{ok, Lifetime} = get_config_value(lifetime,Configlist),
     {ok, DlqLimit} = get_config_value(dlqlimit,Configlist),
     {ok, Clientlifetime} = get_config_value(clientlifetime,Configlist),
 %Configugration fertig
 
 %Serverkomponenten initialisieren
-    QeuemanagerPID = spawn(fun() -> queuemanager:start(DlqLimit) end),
-    ClientmanagerPID = spawn(clientmanager:start(Clientlifetime,QeuemanagerPID,self())),
-    ServerPID = spawn(fun() -> loop(ClientmanagerPID,0) end),
+    io:fwrite("...Server started vor Spawn..."),
+    QueuemanagerPID = spawn(fun() -> queuemanager:start(DlqLimit) end),
+    ClientmanagerPID = spawn(fun() -> clientmanager:start(Clientlifetime,QueuemanagerPID,self()) end),
+    ServerPID = spawn(fun() -> loop(ClientmanagerPID,QueuemanagerPID,0) end),
+    io:fwrite("...Server started nach Spawn..."),
+    
+    logging("server.log","...Queuemanager started..."),
+    logging("server.log","...Clientmanager started..."),
     
     register(Servername,self()),
+    
+    logging("server.log","...Server started and registered..."),
+    
     ServerPID
 .
 
 
-loop(CManager,MessageNumber) ->
+loop(CManager,QManager,MessageNumber) ->
+    io:fwrite("...Server started..."),
     receive
         {getmsgid, ClientPID} -> 
-            logging("server.log",io:format("~p : Server: Received getmsgid:~p ! ~p\n" ,[timeMilliSecond(),ClientPID])),
+            logging("server.log",io:format("~p : Server: Received getmsgid: ~p ! ~p\n" ,[timeMilliSecond(),ClientPID,MessageNumber])),
             ClientPID ! {nnr,MessageNumber},
-            loop(CManager,MessageNumber + 1);
+            loop(CManager,QManager,MessageNumber + 1);
 
         {getmessages,ClientPID} ->
-            logging("server.log",io:format("~p : Server: Received getmessages:~p ! ~p\n" ,[timeMilliSecond(),ClientPID])),
+            logging("server.log",io:format("~p : Server: Received getmessages:~p\n" ,[timeMilliSecond(),ClientPID])),
             CManager ! {getmessages, ClientPID},
             receive
                 {Message,MsgId,Terminated} ->
                     ClientPID ! {reply,MsgId,Message,Terminated}
             end,
             
-            loop(CManager,MessageNumber); %Wieder in den Loop springen
+            loop(CManager,QManager,MessageNumber);
         
         {dropmessage, {Nachricht, Nr}} -> 
-            logging("server.log",io:format("~p : Server: Received dropmessages:~p ! ~p\n" ,[timeMilliSecond(),Nachricht]))
-            
+            logging("server.log",io:format("~p : Server: Received dropmessages:~p\n" ,[timeMilliSecond(),Nachricht])),
+            QManager ! {dropmessage, {Nachricht, Nr}},
+        
+            loop(CManager,QManager,MessageNumber)
     end
 .
     
-currentTimeInSec() ->
-    {MegaSecs,Secs,MicroSecs} = now(),
-    ((MegaSecs*1000000 + Secs)*1000000 + MicroSecs) / 1000000
-.
-    
-terminate(normal,state) -> ok.
+%terminate(normal,state) -> ok.

@@ -18,12 +18,14 @@ start(ServerPID) ->
 .
 
 spawnAllClients(ClientNumber,Server,NumberList,FirstTimeout,ClientLifetime) when (ClientNumber > 0) ->
+    io:fwrite("...Client ~p tries to start...",[ClientNumber]),
     ClientPID = spawn(fun() -> startEditor(io:format("Client ~p.log",[ClientNumber]),Server,0,NumberList,FirstTimeout) end),
     timer:kill_after(ClientLifetime * 1000,ClientPID),
     spawnAllClients(ClientNumber - 1,Server,NumberList,FirstTimeout,ClientLifetime)
 .
 
 startEditor(ClientLog,Server,SentMsg,NumberList,FirstTimeout) ->
+    logging(ClientLog,"...Client started..."),
     Server ! {getmsgid, self()},
         receive
             {nid, Number} -> 
