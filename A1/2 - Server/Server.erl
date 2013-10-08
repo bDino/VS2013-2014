@@ -18,12 +18,12 @@ start() ->
     ServerPID = spawn(fun() -> loop(ClientmanagerPID,QueuemanagerPID,0) end),
 
     
-    logging("server.log","...Queuemanager started..."),
-    logging("server.log","...Clientmanager started..."),
+    logging("server.log","...Queuemanager started...\n"),
+    logging("server.log","...Clientmanager started...\n"),
     
     register(Servername,ServerPID),
     
-    logging("server.log","...Server started and registered..."),
+    logging("server.log","...Server started and registered...\n"),
     
     ServerPID
 .
@@ -38,9 +38,10 @@ loop(CManager,QManager,MessageNumber) ->
 
         {getmessages,ClientPID} ->
             logging("server.log",io:format("~p : Server: Received getmessages:~p\n" ,[timeMilliSecond(),ClientPID])),
-            CManager ! {getmessages, ClientPID},
+            CManager ! {getmessages, ClientPID,self()},
             receive
                 {Message,MsgId,Terminated} ->
+                    io:fwrite("Server hat Message vom ClientManager bekommen: ~p\n",[MsgId]),
                     ClientPID ! {reply,MsgId,Message,Terminated}
             end,
             

@@ -30,21 +30,27 @@ loop(HBQ,DLQ, DLQCapacity) ->
             end;
             
         {getmessagesbynumber, LastMsgId, ClientManagerId} ->
-       		%Fehlercode -1 bei leeren Listen
+                io:fwrite("QUEUEMANAGER getMessageByNumber ~p\n",[LastMsgId]),
+       		
        		LastNumber = maxNrSL(DLQ), 
        		
-       		case (LastMsgId < LastNumber) of
+       		case LastMsgId < LastNumber andalso notemptySL(DLQ) of
                         true ->      
+                    io:fwrite("QUEUEMANAGER DLQ NOT EMPTY ~p\n",[DLQ]),
+       	
                             MsgNr = LastMsgId+1,
                             Message = findneSL(DLQ,MsgNr),
                                 case (MsgNr < LastNumber) of 
                                         true -> Terminated = false;
                                         false -> Terminated = true
                                 end;	
-                        false -> Message = "Nichtleere Dummy Nachricht",
-                                         Terminated = true,
-                                         MsgNr = LastMsgId
+                        false -> 
+                                        io:fwrite("QUEUEMANAGER DLQ EMPTY ~p\n",[DLQ]),
+                                        Message = "Nichtleere Dummy Nachricht",
+                                        Terminated = true,
+                                        MsgNr = LastMsgId
                 end,
+        
         	ClientManagerId ! {Message, MsgNr, Terminated}
     end
 .	 
@@ -76,6 +82,8 @@ fillOffset(HBQ, DLQ, NewKey,MinNrHBQ, DLQCapacity) ->
 
 
 transport(HBQ, DLQ,MinNrHBQ, DLQCapacity) ->
+        io:fwrite("TRANSPORT FROM HBQ TO DLQ ~p\n",[MinNrHBQ]),
+       		
 	Element = findSL(HBQ, MinNrHBQ),
 	Tail = popSL(HBQ),
 	ReadyDLQ = deleteIfFull(DLQ, DLQCapacity),
@@ -87,13 +95,14 @@ transport(HBQ, DLQ,MinNrHBQ, DLQCapacity) ->
 .
 
 transport_rek(HBQ, DLQ, LastHead, DLQCapacity) ->
+        io:fwrite("TRANSPORT REKURSIVE FROM HBQ TO DLQ ~p\n",[LastHead]),
 	Head = minNrSL(HBQ),
 	case Head == (LastHead+1) of
             true -> Element = findSL(HBQ,Head),
                             Tail = popSL(HBQ),
                             ReadyDLQ = deleteIfFull(DLQ, DLQCapacity),
                             NewDLQ = pushSL(ReadyDLQ,{Head,Element}),
-                            transport(Tail, NewDLQ, Head, DLQCapacity);
+                            transport_rek(Tail, NewDLQ, Head, DLQCapacity);
             false -> loop(HBQ, DLQ, DLQCapacity)
 	end
 .

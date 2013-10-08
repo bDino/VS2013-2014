@@ -15,15 +15,15 @@ start(ClientLifetime, QueueManagerPID, ServerPID) ->
 
 run(ClientList, ClientLifetime, QueueManagerPID, ServerPID) ->
 	receive
-		{getmessages, ClientId} ->
+		{getmessages, ClientId,ServerID} ->
 			NewClientList = updateClientList(ClientList, ClientLifetime),
-			getmessages(ClientId, NewClientList, ClientLifetime, QueueManagerPID, ServerPID)
+			getmessages(ClientId, NewClientList, ClientLifetime, QueueManagerPID, ServerPID,ServerID)
 		
 	end  
 .
 	
 	
-getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID) ->
+getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID,ServerID) ->
 	io:fwrite("Client ~p fragt seine nächste Nachricht ab\n",[ClientId]),
 	case orddict:is_key(ClientId, ClientList) of
 		true ->
@@ -40,7 +40,8 @@ getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID) ->
 		{Message, NewMsgId, Terminated} ->
 		    {MsgId, NewTimestamp} = orddict:fetch(ClientId, NewClientList),
 			ClientListWithNewMsgId = orddict:store(ClientId, {NewMsgId, NewTimestamp}, NewClientList),
-			ServerPID ! {Message, NewMsgId, Terminated}
+            io:fwrite("CLientmanager hat Message vom QeueuManager bekommen und sendet an ServerPID: ~p -> ID: ~p\n",[ServerPID,ServerID]),
+			ServerID ! {Message, NewMsgId, Terminated}
 	end,
 			 
 	run(ClientListWithNewMsgId, ClientLifetime, QueueManagerPID, ServerPID)
@@ -49,13 +50,26 @@ getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID) ->
 
 updateClientList(ClientList, ClientLifetime) -> updateClientList(ClientList, ClientLifetime, []).
 
+
 updateClientList([],_,List) -> List;
-updateClientList([{CurrentClientId ,{lastMsgId, Timestamp}} | Tail], ClientLifetime, List) ->
+
+updateClientList([{CurrentClientId, {lastMsgId, Timestamp}}], ClientLifetime, List) ->
+        Lifetime = currentTimeInSec()-Timestamp,
+	case (Lifetime > ClientLifetime) of
+		true -> NewList = List;
+		false -> NewList = orddict:store(CurrentClientId, {lastMsgId, Timestamp}, List)
+	end, 
+	updateClientList([], ClientLifetime, NewList);
+    
+updateClientList(ClientList, ClientLifetime, List) ->
+        [{CurrentClientId, Value},_] = ClientList,
+        {lastMsgId, Timestamp} = Value,
 	Lifetime = currentTimeInSec()-Timestamp,
 	case (Lifetime > ClientLifetime) of
 		true -> NewList = List;
 		false -> NewList = orddict:store(CurrentClientId, {lastMsgId, Timestamp}, List)
 	end,
+        Tail = orddict:erase(CurrentClientId,ClientList), 
 	updateClientList(Tail, ClientLifetime, NewList)
 .
 			 
@@ -66,8 +80,9 @@ updateClientList([{CurrentClientId ,{lastMsgId, Timestamp}} | Tail], ClientLifet
 
 addClient(ClientId, LastMsgId, ClientList) ->
 	io:fwrite("Client mit ClientID ~p, LastMsgId ~p und Timestamp ~p soll zur Clientliste hinzugefügt werden\n", [ClientId, LastMsgId, timeMilliSecond()]),
-	io:fwrite("Clientliste: ~p\n", [ClientList]),
-	orddict:store(ClientId, {LastMsgId, currentTimeInSec()}, ClientList)
+	NewClients = orddict:store(ClientId, {LastMsgId, currentTimeInSec()}, ClientList),
+        io:fwrite("Clientliste: ~p\n", [NewClients]),
+	NewClients
 .	
 
 
