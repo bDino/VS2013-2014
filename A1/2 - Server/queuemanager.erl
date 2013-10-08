@@ -1,12 +1,16 @@
 -module(queuemanager).
 -author("Milena Dreier, Dino Buskulic").
 -export([start/1]).
--import(werkzeug,[get_config_value/2,logging/2,logstop/0,timeMilliSecond/0]).
+-import(werkzeug,[get_config_value/2,logging/2,logstop/0,
+		 pushSL/2,popSL/1,popfiSL/1,findSL/2,findneSL/2,lengthSL/1,minNrSL/1,maxNrSL/1,emptySL/0,notemptySL/1,delete_last/1,shuffle/1,
+		 timeMilliSecond/0,reset_timer/3,
+		 type_is/1,to_String/1,list2String/1,
+		 bestimme_mis/2]).
 
 start(DLQCapacity) ->
 
-    HoldBackQueu = orddict:new(),
-    DeliveryQueue = orddict:new(),
+    HoldBackQueu = emptySL(),
+    DeliveryQueue = emptySL(),
     
     loop(HoldBackQueu, DeliveryQueue, DLQCapacity)
 .
@@ -18,7 +22,7 @@ loop(HBQ,DLQ, DLQCapacity) ->
         {dropmessage, {Message, Number}} ->
             ModifiedMsg = io:format("~p HBQ in : ~p",[Message,timeMilliSecond()]),
             logging("server.log",ModifiedMsg),
-            NewHBQ = orddict:store(Number,ModifiedMsg,HBQ),
+            NewHBQ = pushSL(HBQ,{Number,ModifiedMsg}),
             
             case checkIfEnoughMessages(NewHBQ, DLQCapacity) of
             	true -> transportToDLQ(NewHBQ, DLQ, DLQCapacity);
@@ -26,93 +30,80 @@ loop(HBQ,DLQ, DLQCapacity) ->
             end;
             
         {getmessagesbynumber, LastMsgId, ClientManagerId} ->
-       		KeyList = orddict:fetch_keys(DLQ),	
-       		LastNumber = lists:last(KeyList), 
+       		%Fehlercode -1 bei leeren Listen
+       		LastNumber = maxNrSL(DLQ), 
        		
        		case (LastMsgId < LastNumber) of
-				true -> MessageNumber = getmessagenumber(LastMsgId, DLQ),
-						Message = orddict:fetch(MessageNumber, DLQ),
-						case (MessageNumber < LastNumber) of 
-							true -> Terminated = false;
-							false -> Terminated = true
-						end;	
-				false -> Message = "Nichtleere Dummy Nachricht",
-						 Terminated = true,
-						 MessageNumber = LastMsgId
-			end,
-        	ClientManagerId ! {Message, MessageNumber, Terminated}
+                        true ->      
+                            MsgNr = LastMsgId+1,
+                            Message = findneSL(DLQ,MsgNr),
+                                case (MsgNr < LastNumber) of 
+                                        true -> Terminated = false;
+                                        false -> Terminated = true
+                                end;	
+                        false -> Message = "Nichtleere Dummy Nachricht",
+                                         Terminated = true,
+                                         MsgNr = LastMsgId
+                end,
+        	ClientManagerId ! {Message, MsgNr, Terminated}
     end
-.
-  
-getmessagenumber(LastMsgId, DLQ) ->
-	NewMsgId = LastMsgId +1,
-	
-	case (orddict:is_key(NewMsgId, DLQ)) of
-        	true -> NewMsgId;
-        	false -> getmessagenumber(NewMsgId, DLQ)
-    end
-.
-
-	 
+.	 
 
 checkIfEnoughMessages(HBQ, DLQCapacity) ->
-	Length = orddict:length(HBQ),
+	Length = lengthSL(HBQ),
 	Length > DLQCapacity/2
 .
 
 
 transportToDLQ(HBQ, DLQ, DLQCapacity) ->
-	KeyList = orddict:fetch_keys(DLQ),
-	LastKey = list:last(KeyList),
+        LastKey = maxNrSL(DLQ),
 	NewKey = LastKey+1,
-	case orddict:is_key(NewKey, HBQ) of
-		true -> transport(HBQ, DLQ, DLQCapacity);
-		false -> fillOffset(HBQ, DLQ, NewKey, DLQCapacity)
+        MinNrHBQ = minNrSL(HBQ),
+	
+	case (MinNrHBQ-NewKey) > 1 of
+            true ->     fillOffset(HBQ, DLQ, NewKey,MinNrHBQ, DLQCapacity);
+            false ->    transport(HBQ, DLQ, MinNrHBQ, DLQCapacity)
 	end
 .
 	
-fillOffset(HBQ, DLQ, NewKey, DLQCapacity) ->
-	[Head|Tail] = orddict:fetch_keys(HBQ),
-	Message = io:format("***Fehlernachricht fuer Nachrichtennummern ~p bis ~p um 16.05 18:01:30,580",[NewKey,Head-1]),
+fillOffset(HBQ, DLQ, NewKey,MinNrHBQ, DLQCapacity) ->
+        Message = io:format("***Fehlernachricht fuer Nachrichtennummern ~p bis ~p um 16.05 18:01:30,580",[NewKey,MinNrHBQ-1]),
         logging("server.log",Message),
 	ReadyDLQ = deleteIfFull(DLQ, DLQCapacity),
-	NewDLQ = orddict:store(Head-1, Message, ReadyDLQ),
-	transport(HBQ, NewDLQ, DLQCapacity)
+	NewDLQ = pushSL(ReadyDLQ, {MinNrHBQ-1,Message}),
+	transport(HBQ, NewDLQ, MinNrHBQ, DLQCapacity)
 .
 
 
-transport(HBQ, DLQ, DLQCapacity) ->
-	KeyList = orddict:fetch_keys(HBQ),
-	[Head|Tail] = KeyList,
-	Element = orddict:fetch(Head, HBQ),
-	orddict:erase(Head, HBQ),
+transport(HBQ, DLQ,MinNrHBQ, DLQCapacity) ->
+	Element = findSL(HBQ, MinNrHBQ),
+	Tail = popSL(HBQ),
 	ReadyDLQ = deleteIfFull(DLQ, DLQCapacity),
-        ModifiedMsg = io:format("~p DLQ in : ~p",[Element,timeMilliSecond()]),
+        ModifiedMsg = io:format("~p DLQ in : ~p",[Element, timeMilliSecond()]),
         logging("server.log",ModifiedMsg),
-	NewDLQ = orddict:store(Head, ModifiedMsg, ReadyDLQ),
+	NewDLQ = pushSL(ReadyDLQ,{MinNrHBQ,  ModifiedMsg}),
 	
-	transport(Tail, NewDLQ, Head, DLQCapacity)
+	transport_rek(Tail, NewDLQ, MinNrHBQ, DLQCapacity)
 .
 
-transport(HBQ, DLQ, LastHead, DLQCapacity) ->
-	[Head|Tail] = orddict:fetch_keys(HBQ),
-	case Head = (LastHead+1) of
-		true -> Element = orddict:fetch(Head, HBQ),
-				orddict:erase(Head, HBQ),
-				ReadyDLQ = deleteIfFull(DLQ, DLQCapacity),
-				NewDLQ = orddict:store(Head, Element, ReadyDLQ),
-				transport(Tail, NewDLQ, Head, DLQCapacity);
-		false -> loop(HBQ, DLQ, DLQCapacity)
+transport_rek(HBQ, DLQ, LastHead, DLQCapacity) ->
+	Head = minNrSL(HBQ),
+	case Head == (LastHead+1) of
+            true -> Element = findSL(HBQ,Head),
+                            Tail = popSL(HBQ),
+                            ReadyDLQ = deleteIfFull(DLQ, DLQCapacity),
+                            NewDLQ = pushSL(ReadyDLQ,{Head,Element}),
+                            transport(Tail, NewDLQ, Head, DLQCapacity);
+            false -> loop(HBQ, DLQ, DLQCapacity)
 	end
 .
 	
 deleteIfFull(DLQ, DLQCapacity) ->
-	Length = orddict:length(DLQ),
+	Length = lengthSL(DLQ),
 	
 	case Length = DLQCapacity of
-		true -> [Head|Tail] = orddict:fetch_key(DLQ),
-				NewDLQ = orddict:erase(Head, DLQ);
-		false -> NewDLQ = DLQ
+		true ->         NewDLQ = popSL(DLQ);
+		false ->        NewDLQ = DLQ
 	end,
 	NewDLQ
 .
