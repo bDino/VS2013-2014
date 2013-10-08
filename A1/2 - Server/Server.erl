@@ -23,16 +23,17 @@ start() ->
 %Serverkomponenten initialisieren
     QueuemanagerPID = spawn_link(fun() -> queuemanager:start(DlqLimit) end),
     ClientmanagerPID = spawn_link(fun() -> clientmanager:start(Clientlifetime,QueuemanagerPID) end),
-    %ServerPID = spawn(fun() -> loop(ClientmanagerPID,QueuemanagerPID,0) end),
-	ServerPID = self(),
+    ServerPID = spawn(fun() -> loop(ClientmanagerPID,QueuemanagerPID,0) end),
+	%ServerPID = self(),
     
-    logging("server.log",io:format("...Queuemanager started with PID ~p...\n", [QueuemanagerPID])),
-    logging("server.log",io:format("...Clientmanager started with PID ~p...\n", [ClientmanagerPID])),
+    logging("server.log","...Queuemanager started ... \n"),
+    logging('server.log',"...Clientmanager started ...\n"),
     
     register(Servername,ServerPID),
-    logging("server.log",io:format("...Server started and registered with Servername ~p and PID ~p...\n", [Servername, ServerPID])),
+    logging("server.log","...Server started and registered with Servername ...\n"),
     
-    loop(ClientmanagerPID,QueuemanagerPID,0)
+    %loop(ClientmanagerPID,QueuemanagerPID,0)
+    ServerPID
 .
 
 
@@ -41,14 +42,15 @@ start() ->
 loop(CManager,QManager,MessageNumber) ->
     receive
         {getmsgid, ClientPID} -> 
-            logging("server.log",io:format("~p : Server: Received getmsgid: ~p ! ~p\n" ,[timeMilliSecond(),ClientPID,MessageNumber])),
+            logging("server.log","Server: Received getmsgid\n"),
             ClientPID ! {nnr,MessageNumber},
             NewMsgNr = MessageNumber+1,
             loop(CManager, QManager, NewMsgNr);
 
         {getmessages,ClientPID} ->
+        	logging("server.log","Server: Received getmessages\n"),
             logging("server.log",io:format("~p : Server: Received getmessages:~p\n" ,[timeMilliSecond(),ClientPID])),
-            CManager ! {getmessages, ClientPID,self()},
+            CManager ! {getmessages, ClientPID, self()},
             receive
                 {Message,MsgId,Terminated} ->
                     io:fwrite("Server hat Message vom ClientManager bekommen: ~p\n",[MsgId]),
@@ -62,10 +64,10 @@ loop(CManager,QManager,MessageNumber) ->
             QManager ! {dropmessage, {Nachricht, Nr}},
         
             loop(CManager, QManager, MessageNumber)
-    after 
-    	1000*100000000 ->
-    		logging("server.log",io:format("Lifetime is over. Server ~p terminates" ,[self()])),
-    		exit("Lifetime is over")
+%%    after 
+%%    	1000*100000000 ->
+%%    		logging("server.log",io:format("Lifetime is over. Server ~p terminates" ,[self()])),
+%%    		exit("Lifetime is over")
     end
 .
     
