@@ -22,14 +22,14 @@ loop(HBQ,DLQ, DLQCapacity) ->
             case checkIfEnoughMessages(NewHBQ, DLQCapacity) of
             	true -> transportToDLQ(NewHBQ, DLQ, DLQCapacity);
             	false -> loop(HBQ,DLQ, DLQCapacity)
-            end
+            end;
             
         {getmessagesbynumber, LastMsgId, ClientManagerId} ->
        		KeyList = orddict:fetch_keys(DLQ),	
        		LastNumber = lists:last(KeyList), 
        		
        		case (LastMsgId < LastNumber) of
-				true -> MessageNumber = getmessagenumber(LastMsgId, DLQ, LastNumber),
+				true -> MessageNumber = getmessagenumber(LastMsgId, DLQ),
 						Message = orddict:fetch(MessageNumber, DLQ),
 						case (MessageNumber < LastNumber) of 
 							true -> Terminated = false;
@@ -43,12 +43,12 @@ loop(HBQ,DLQ, DLQCapacity) ->
     end
 .
   
-getmessagenumber(LastMsgId, DLQ, LastNumber) ->
+getmessagenumber(LastMsgId, DLQ) ->
 	NewMsgId = LastMsgId +1,
 	
-	case (orddict:is_key(NewMsgId, DLQ) of
+	case (orddict:is_key(NewMsgId, DLQ)) of
         	true -> NewMsgId;
-        	false -> getmessagenumber(NewMsgId, DLQ);
+        	false -> getmessagenumber(NewMsgId, DLQ)
     end
 .
 
