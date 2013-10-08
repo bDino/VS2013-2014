@@ -72,14 +72,14 @@ loop(HBQ,DLQ, DLQCapacity) ->
     end
 .	 
 
-
+%% -------------------------------------------
 %% Kontrolliert ob Nachrichten aus der HBQ in die DLQ gepackt werden können, dh ob |HBQ| > Kapazität(DLQ)
 checkIfEnoughMessages(HBQ, DLQCapacity) ->
 	Length = lengthSL(HBQ),
 	Length > DLQCapacity/2
 .
 
-
+%% -------------------------------------------
 %% Lässt Nachrichten von der HBQ in die DLQ übertragen wenn zwischen beiden Queues keine Lücke ist, sonst füllt er die Lücke mit einer
 %% Fehlernachricht
 transportToDLQ(HBQ, DLQ, DLQCapacity) ->
@@ -93,7 +93,7 @@ transportToDLQ(HBQ, DLQ, DLQCapacity) ->
 	end
 .
 
-
+%% -------------------------------------------
 %% Füllt die Lücke zwischen DLQ und HBQ mit einer entsprechenden Fehlermeldung
 %% Fehlermeldung bekommt MsgId der letzten nicht übertragenden Nachricht aus dieser Lücke
 %% TODO: Client könnte denken dass das seine Nachricht ist und sie dementsprechend anders ausgeben	
@@ -105,7 +105,7 @@ fillOffset(HBQ, DLQ, NewKey,MinNrHBQ, DLQCapacity) ->
 	transport(HBQ, NewDLQ, MinNrHBQ, DLQCapacity)
 .
 
-
+%% -------------------------------------------
 %% Schreibt das erste Element aus der HBQ in die DLQ
 transport(HBQ, DLQ,MinNrHBQ, DLQCapacity) ->
         io:fwrite("TRANSPORT FROM HBQ TO DLQ ~p\n",[MinNrHBQ]),
@@ -120,7 +120,7 @@ transport(HBQ, DLQ,MinNrHBQ, DLQCapacity) ->
 	transport_rek(Tail, NewDLQ, MinNrHBQ, DLQCapacity)
 .
 
-
+%% --------
 %% Schreibt solange Elemente aus der HBQ in die DLQ bis eine Lücke erreicht wurde oder die HBQ leer ist
 %% Ruft anschließend wieder die loop-Funktion auf
 transport_rek(HBQ, DLQ, LastHead, DLQCapacity) ->
@@ -136,7 +136,7 @@ transport_rek(HBQ, DLQ, LastHead, DLQCapacity) ->
 	end
 .
 
-
+%% -------------------------------------------
 %% Löscht das erste Element aus der DLQ wenn diese voll ist, sonst gibt er sie unverändert zurück	
 deleteIfFull(DLQ, DLQCapacity) ->
 	Length = lengthSL(DLQ),

@@ -1,29 +1,45 @@
 -module(clientmanager).
 -author("Milena Dreier, Dino Buskulic").
--export([start/3]).
+-export([start/2]).
 -import(werkzeug, [get_config_value/2, logging/2, logstop/0, timeMilliSecond/0]).
 
 %%Syntax Eintrag ClientList: ClientId, {LastMsgId, Timestamp}
 
 %%TODO: Client vergessen!
 
-start(ClientLifetime, QueueManagerPID, ServerPID) ->
+%% -------------------------------------------
+% Clientmanager
+%% -------------------------------------------
+%%
+%% -------------------------------------------
+%% startet den Clientmanager
+%% wird von server.erl aufgerufen
+% Param: 	ClientLifetime -> wie lange soll der Client gemerkt werden
+%			QueueManagerPID -> ID des Queuemanager Prozesses
+%
+
+start(ClientLifetime, QueueManagerPID) ->
 	ClientList = orddict:new(),
-	run(ClientList, ClientLifetime, QueueManagerPID, ServerPID)
+	run(ClientList, ClientLifetime, QueueManagerPID)
 .
 
 
-run(ClientList, ClientLifetime, QueueManagerPID, ServerPID) ->
+%% -------------------------------------------
+%% loop-Funktion wird immer wieder aufgerufen und reagiert auf eingehende Nachrichten
+loop(ClientList, ClientLifetime, QueueManagerPID) ->
 	receive
-		{getmessages, ClientId,ServerID} ->
+		{getmessages, ClientId,ServerPID} ->
 			NewClientList = updateClientList(ClientList, ClientLifetime),
-			getmessages(ClientId, NewClientList, ClientLifetime, QueueManagerPID, ServerPID,ServerID)
+			getmessages(ClientId, NewClientList, ClientLifetime, QueueManagerPID, ServerPID)
 		
 	end  
 .
 	
-	
-getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID,ServerID) ->
+%% -------------------------------------------	
+%% getmessages ermittelt die Nummer der vom Client zuletzt erhaltenen Nachricht mithilfe der ClientListe
+%% ist der Client nicht in der Liste ist seine letzte Nachrichtennummer 0 und er wird in die Liste aufgenommen
+%% mithilfe der letzten Nachrichten Nummer und des Queuemanagers wird die Nachricht ermittelt
+getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID) ->
 	io:fwrite("Client ~p fragt seine nächste Nachricht ab\n",[ClientId]),
 	case orddict:is_key(ClientId, ClientList) of
 		true ->
@@ -40,17 +56,19 @@ getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID,Ser
 		{Message, NewMsgId, Terminated} ->
 		    {MsgId, NewTimestamp} = orddict:fetch(ClientId, NewClientList),
 			ClientListWithNewMsgId = orddict:store(ClientId, {NewMsgId, NewTimestamp}, NewClientList),
-            io:fwrite("CLientmanager hat Message vom QeueuManager bekommen und sendet an ServerPID: ~p -> ID: ~p\n",[ServerPID,ServerID]),
-			ServerID ! {Message, NewMsgId, Terminated}
+            io:fwrite("CLientmanager hat Message vom QeueuManager bekommen und sendet an ServerPID: ~p\n",[ServerPID]),
+			ServerPID ! {Message, NewMsgId, Terminated}
 	end,
 			 
 	run(ClientListWithNewMsgId, ClientLifetime, QueueManagerPID, ServerPID)
 .
 	
-
+%% -------------------------------------------
+%% prüft ob sich in der Clientliste Clients aufhalten die länger als Lifetime nichts gesendet haben
+%% erstellt rekursiv eine Liste die nur die aktuellen Clients enthält und gibt diese zurück
 updateClientList(ClientList, ClientLifetime) -> updateClientList(ClientList, ClientLifetime, []).
 
-
+% ------
 updateClientList([],_,List) -> List;
 
 updateClientList([{CurrentClientId, {lastMsgId, Timestamp}}], ClientLifetime, List) ->
@@ -60,7 +78,7 @@ updateClientList([{CurrentClientId, {lastMsgId, Timestamp}}], ClientLifetime, Li
 		false -> NewList = orddict:store(CurrentClientId, {lastMsgId, Timestamp}, List)
 	end, 
 	updateClientList([], ClientLifetime, NewList);
-    
+	    
 updateClientList(ClientList, ClientLifetime, List) ->
         [{CurrentClientId, Value},_] = ClientList,
         {lastMsgId, Timestamp} = Value,
@@ -72,12 +90,9 @@ updateClientList(ClientList, ClientLifetime, List) ->
         Tail = orddict:erase(CurrentClientId,ClientList), 
 	updateClientList(Tail, ClientLifetime, NewList)
 .
-			 
-%%	when (currentTimeInSec()-Timestamp) > ClientLifetime ->
-%%	updateClientList(Tail, ClientLifetime, [{CurrentClientId, {lastMsgId, Timestamp}}|List]).
-	
 
-
+%% -------------------------------------------
+%% fügt einen Client mit einem aktuellen Zeitstempel in die Clientliste ein
 addClient(ClientId, LastMsgId, ClientList) ->
 	io:fwrite("Client mit ClientID ~p, LastMsgId ~p und Timestamp ~p soll zur Clientliste hinzugefügt werden\n", [ClientId, LastMsgId, timeMilliSecond()]),
 	NewClients = orddict:store(ClientId, {LastMsgId, currentTimeInSec()}, ClientList),
@@ -85,7 +100,8 @@ addClient(ClientId, LastMsgId, ClientList) ->
 	NewClients
 .	
 
-
+%% -------------------------------------------
+%% gibt die aktuelle Zeit in Sekunden aus, um sie in der Clientliste zu speichern und mit der Variable Clientlifetime zu vergleichen
 currentTimeInSec() ->
 	{MegaSecs,Secs,MicroSecs} = now(),
 	((MegaSecs*1000000 + Secs)*1000000 + MicroSecs) / 1000000
