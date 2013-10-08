@@ -62,10 +62,10 @@ loop(CManager,QManager,MessageNumber, Lifetime) ->
             logging("server.log",io:format("~p : Server: Received dropmessages:~p\n" ,[timeMilliSecond(),Nachricht])),
             QManager ! {dropmessage, {Nachricht, Nr}},
         
-            loop(CManager,QManager,MessageNumber);
+            loop(CManager,QManager,MessageNumber)
     after 
     	Lifetime ->
-    		logging("server.log",io:format("Lifetime ~p is over. Server ~p terminates" ,[Lifetime,self()]))
+    		logging("server.log",io:format("Lifetime ~p is over. Server ~p terminates" ,[Lifetime,self()])),
     		exit("Lifetime is over")
     end
 .

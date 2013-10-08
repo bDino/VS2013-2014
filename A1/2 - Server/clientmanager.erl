@@ -20,7 +20,7 @@
 
 start(ClientLifetime, QueueManagerPID) ->
 	ClientList = orddict:new(),
-	run(ClientList, ClientLifetime, QueueManagerPID)
+	loop(ClientList, ClientLifetime, QueueManagerPID)
 .
 
 
@@ -60,7 +60,7 @@ getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID) ->
 			ServerPID ! {Message, NewMsgId, Terminated}
 	end,
 			 
-	run(ClientListWithNewMsgId, ClientLifetime, QueueManagerPID, ServerPID)
+	loop(ClientListWithNewMsgId, ClientLifetime, QueueManagerPID)
 .
 	
 %% -------------------------------------------
