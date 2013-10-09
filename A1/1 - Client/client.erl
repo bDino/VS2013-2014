@@ -44,7 +44,6 @@ spawnAllClients(1,Server,NumberList,FirstTimeout,ClientLifetime) ->
 .
 
 startEditor(ClientLog,ClientNumber,Server,SentMsg,NumberList,FirstTimeout) ->
-    io:fwrite("EDITOR with log ~p started\nSend To Server ~p\n",[ClientLog,Server]),
     Server ! {getmsgid, self()},        
         receive
             {nnr, Number} -> 
@@ -62,6 +61,7 @@ startEditor(ClientLog,ClientNumber,Server,SentMsg,NumberList,FirstTimeout) ->
                             startReader(0,Server,NumberList,ClientLog,FirstTimeout,ClientNumber);
                         false ->
                             Message = lists:concat(["Client : ",ClientNumber,".Nachricht :", Number ,"te Nachricht C out: ",timeMilliSecond(),"\n"]),
+                            logging(ClientLog,Message),
                             Server ! {dropmessage, {Message, Number}},
                             startEditor(ClientLog,ClientNumber,Server,SentMsg + 1,NewList,FirstTimeout)
                     end;

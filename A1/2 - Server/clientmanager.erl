@@ -19,7 +19,7 @@
 %
 
 start(ClientLifetime, QueueManagerPID) ->
-        logging("server.log","...Queuemanager started ... \n"),
+        logging("server.log","...Clientmanager started ... \n"),
 	ClientList = orddict:new(),
 	loop(ClientList, ClientLifetime, QueueManagerPID)
 .
