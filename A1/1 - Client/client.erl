@@ -61,7 +61,8 @@ startEditor(ClientLog,Server,SentMsg,NumberList,FirstTimeout) ->
                             
                             startReader(0,Server,NumberList,ClientLog);
                         false ->
-                            Server ! {dropmessage, {io:format("~p : ~pte Nachricht C out: ~p.\n",[self(),Number,timeMilliSecond()])}},
+                            Message = lists:concat([self()," : ",Number ,"te Nachricht C out: ",timeMilliSecond(),"\n"]),
+                            Server ! {dropmessage, {Message, Number}},
                             startEditor(ClientLog,Server,SentMsg + 1,NewList,FirstTimeout)
                     end;
     
