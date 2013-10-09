@@ -1,9 +1,9 @@
 -module(client).
 -author("Milena Dreier, Dino Buskulic").
--export([start/1]).
+-export([start/0]).
 -import(werkzeug,[get_config_value/2,logging/2,logstop/0,timeMilliSecond/0,delete_last/1,shuffle/1,reset_timer/3,type_is/1,to_String/1,bestimme_mis/2]).
 
-start(ServerNode) ->
+start() ->
     {ok, ConfigListe} = file:consult("client.cfg"),
     {ok, Lifetime} = get_config_value(lifetime, ConfigListe),
     {ok, Servername} = get_config_value(servername, ConfigListe),
@@ -13,26 +13,36 @@ start(ServerNode) ->
     FirstTimeout = 2000 + random:uniform(2000),
     NumberList = [],
     
-    %case net_adm:ping(ServerNode) of
-        % We received an answer from the server-node.
-     %   pong -> ServerPid = Servername,
+    {_,ServerNode} = Servername,
+    
+    case net_adm:ping(ServerNode) of
+         %We received an answer from the server-node.
+        pong ->
 
+            io:format("A connection to the server with PID ~p could be established :(. \n", [Servername]),
             % Start the number of clients specified in the config file.
-            spawnAllClients(Clients,ServerNode,NumberList,FirstTimeout,Lifetime)
+            spawnAllClients(Clients,Servername,NumberList,FirstTimeout,Lifetime);
 
         % The server-node failed to answer :(.
-      %  pang -> io:format("A connection to the server could not be established :(. \n")
-    %end
+        pang -> io:format("A connection to the server with PID ~p could not be established :(. \n", [Servername])
+    end
 .    
     
 
-spawnAllClients(ClientNumber,Server,NumberList,FirstTimeout,ClientLifetime) when (ClientNumber > 0) ->
-    ClientPID = spawn(fun() -> startEditor(io:format("Client ~p.log",[ClientNumber]),Server,0,NumberList,FirstTimeout) end),
+spawnAllClients(ClientNumber,Server,NumberList,FirstTimeout,ClientLifetime) when (ClientNumber > 1) ->
+    ClientLog = lists:concat("Client ~p.log",[ClientNumber]),
+    ClientPID = spawn(fun() -> startEditor(ClientLog,Server,0,NumberList,FirstTimeout) end),
     timer:kill_after(ClientLifetime * 1000,ClientPID),
-    spawnAllClients(ClientNumber - 1,Server,NumberList,FirstTimeout,ClientLifetime)
+    spawnAllClients(ClientNumber - 1,Server,NumberList,FirstTimeout,ClientLifetime);
+ 
+spawnAllClients(1,Server,NumberList,FirstTimeout,ClientLifetime) ->
+    ClientLog = lists:concat("Client ~p.log",[ClientNumber]),
+    ClientPID = spawn(fun() -> startEditor(io:format(ClientLog,Server,0,NumberList,FirstTimeout) end),
+    timer:kill_after(ClientLifetime * 1000,ClientPID)   
 .
 
 startEditor(ClientLog,Server,SentMsg,NumberList,FirstTimeout) ->
+    io:fwrite("EDITOR with log ~p started\n",[ClientLog]),
     Server ! {getmsgid, self()},        
         receive
             {nnr, Number} -> 
