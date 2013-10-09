@@ -13,16 +13,17 @@ start() ->
     FirstTimeout = 2000 + random:uniform(2000),
     NumberList = [],
     
-    {_,ServerNode} = Servername,
+    {Name,ServerNode} = Servername,
     
     
     case net_adm:ping(ServerNode) of
          %We received an answer from the server-node.
         pong ->
-
-            io:format("A connection to the server with PID ~p could be established :(. \n", [Servername]),
+            ServerPID = global:whereis_name(Name),
+            io:format("A connection to the server with PID ~p and Name ~p could be established :). \n", [ServerPID, Name]),
+            
             % Start the number of clients specified in the config file.
-            spawnAllClients(Clients,Servername,NumberList,FirstTimeout,Lifetime);
+            spawnAllClients(Clients,ServerPID,NumberList,FirstTimeout,Lifetime);
 
         % The server-node failed to answer :(.
         pang -> io:format("A connection to the server with PID ~p could not be established :(. \n", [Servername])
