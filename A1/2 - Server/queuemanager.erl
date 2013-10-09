@@ -37,7 +37,8 @@ loop(HBQ,DLQ, DLQCapacity) ->
             io:fwrite("DROPMESSAGE im queuemanager mit Message Number ~p\n",[Number]),
             ModifiedMsg = io:format("~p HBQ in : ~p",[Message,timeMilliSecond()]),
             logging("server.log",ModifiedMsg),
-            NewHBQ = pushSL(HBQ,{Number,ModifiedMsg}),
+            Elem = {Number, ModifiedMsg},
+            NewHBQ = pushSL(HBQ,Elem),
             
             
             case checkIfEnoughMessages(NewHBQ, DLQCapacity) of
