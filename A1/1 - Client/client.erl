@@ -1,9 +1,9 @@
 -module(client).
 -author("Milena Dreier, Dino Buskulic").
--export([start/0]).
+-export([start/1]).
 -import(werkzeug,[get_config_value/2,logging/2,logstop/0,timeMilliSecond/0,delete_last/1,shuffle/1,reset_timer/3,type_is/1,to_String/1,bestimme_mis/2]).
 
-start() ->
+start(ServerPID) ->
     {ok, ConfigListe} = file:consult("client.cfg"),
     {ok, Lifetime} = get_config_value(lifetime, ConfigListe),
     {ok, Servername} = get_config_value(servername, ConfigListe),
@@ -22,7 +22,7 @@ start() ->
 
             io:format("A connection to the server with PID ~p could be established :). \n", [Servername]),
             % Start the number of clients specified in the config file.
-            spawnAllClients(Clients,Servername,NumberList,FirstTimeout,Lifetime);
+            spawnAllClients(Clients,ServerPID,NumberList,FirstTimeout,Lifetime);
 
         % The server-node failed to answer :(.
         pang -> io:format("A connection to the server with PID ~p could not be established :(. \n", [Servername])
@@ -33,7 +33,7 @@ start() ->
 spawnAllClients(ClientNumber,Server,NumberList,FirstTimeout,ClientLifetime) when (ClientNumber > 1) ->
     ClientLog = lists:concat(["Client ",ClientNumber,".log"]),
     ClientPID = spawn(fun() -> startEditor(ClientLog,Server,0,NumberList,FirstTimeout) end),
-    timer:kill_after(ClientLifetime * 1000,ClientPID),
+    %timer:kill_after(ClientLifetime * 1000,ClientPID),
     spawnAllClients(ClientNumber - 1,Server,NumberList,FirstTimeout,ClientLifetime);
  
 spawnAllClients(1,Server,NumberList,FirstTimeout,ClientLifetime) ->
@@ -58,7 +58,7 @@ startEditor(ClientLog,Server,SentMsg,NumberList,FirstTimeout) ->
                             logging(ClientLog,io:format("Set Client to Sleep: ~p\n",[SleepTime])),
                             timer:sleep(SleepTime),
                             
-                            startReader(0,Server,NumberList,ClientLog);
+                            startReader(0,Server,NumberList,ClientLog,FirstTimeout);
                         false ->
                             Server ! {dropmessage, {io:format("~p : ~pte Nachricht C out: ~p.\n",[self(),Number,timeMilliSecond()])}},
                             startEditor(ClientLog,Server,SentMsg + 1,NewList,FirstTimeout)
@@ -70,7 +70,7 @@ startEditor(ClientLog,Server,SentMsg,NumberList,FirstTimeout) ->
 .
 
 
-startReader(NumberOfMessages,Server,NumberList,ClientLog) when (NumberOfMessages < 5) ->
+startReader(NumberOfMessages,Server,NumberList,ClientLog,FirstTimeout) when (NumberOfMessages < 5) ->
     logging(ClientLog,io:format("Started Reader Mod: ~p\n",[timeMilliSecond()])),
     Server ! {getmessages, self()},
     
@@ -82,8 +82,8 @@ startReader(NumberOfMessages,Server,NumberList,ClientLog) when (NumberOfMessages
             end,
             
             case (Terminated == false) of
-                true -> startReader(NumberOfMessages,Server,NumberList,ClientLog);
-                false -> ok
+                true -> startReader(NumberOfMessages,Server,NumberList,ClientLog,FirstTimeout);
+                false -> startEditor(ClientLog,Server,0,NumberList,FirstTimeout)
             end
     end
 .

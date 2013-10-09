@@ -78,7 +78,7 @@ updateClientList([],_,List) ->
 
 updateClientList([{CurrentClientId, Value}], ClientLifetime, List) ->
         io:fwrite("CLIENTLIST hat nur einen Eintrag: ~p, ~p",[CurrentClientId, Value]),
-		{lastMsgId, Timestamp} = Value,
+		{LastMsgId, Timestamp} = Value,
         Lifetime = currentTimeInSec()-Timestamp,
 	case (Lifetime > ClientLifetime) of
 		true -> NewList = List;
