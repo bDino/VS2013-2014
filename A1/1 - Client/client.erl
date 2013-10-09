@@ -34,61 +34,58 @@ start() ->
 
 spawnAllClients(ClientNumber,Server,NumberList,FirstTimeout,ClientLifetime) when (ClientNumber > 1) ->
     ClientLog = lists:concat(["Client ",ClientNumber,".log"]),
-    ClientPID = spawn(fun() -> startEditor(ClientLog,Server,0,NumberList,FirstTimeout) end),
+    ClientPID = spawn(fun() -> startEditor(ClientLog,ClientNumber,Server,0,NumberList,FirstTimeout) end),
     %timer:kill_after(ClientLifetime * 1000,ClientPID),
     spawnAllClients(ClientNumber - 1,Server,NumberList,FirstTimeout,ClientLifetime);
  
 spawnAllClients(1,Server,NumberList,FirstTimeout,ClientLifetime) ->
-    ClientLog = lists:concat(["Client ",1,".log"]),
-    ClientPID = spawn(fun() -> startEditor(ClientLog,Server,0,NumberList,FirstTimeout) end),
+    ClientPID = spawn(fun() -> startEditor("Client 1.log",1,Server,0,NumberList,FirstTimeout) end),
     timer:kill_after(ClientLifetime * 1000,ClientPID)   
 .
 
-startEditor(ClientLog,Server,SentMsg,NumberList,FirstTimeout) ->
+startEditor(ClientLog,ClientNumber,Server,SentMsg,NumberList,FirstTimeout) ->
     io:fwrite("EDITOR with log ~p started\nSend To Server ~p\n",[ClientLog,Server]),
     Server ! {getmsgid, self()},        
         receive
             {nnr, Number} -> 
             
-                logging(ClientLog, io:format("Received next Message Number: ~p\n",[Number])),
+                logging(ClientLog, lists:concat(["Received next Message Number: ",Number,"\n"])),
                 NewList = [Number|NumberList],
         
                     case (SentMsg == 5) of 
                         true ->
-                            logging(ClientLog,io:format("Forgott to send Message Number: ~p\n",[Number])),
+                            logging(ClientLog,lists:concat(["Forgott to send Message Number: ",Number,"\n"])),
                             SleepTime = 2000 + random:uniform(3000),
-                            logging(ClientLog,io:format("Set Client to Sleep: ~p\n",[SleepTime])),
+                            logging(ClientLog,lists:concat(["Set Client to Sleep: ",SleepTime,"\n"])),
                             timer:sleep(SleepTime),
                             
-                            startReader(0,Server,NumberList,ClientLog,FirstTimeout);
+                            startReader(0,Server,NumberList,ClientLog,FirstTimeout,ClientNumber);
                         false ->
-                            SelfPID = self(),
-                            Time = timeMilliSecond(),
-                            Message = lists:concat([SelfPID," : ",Number ,"te Nachricht C out: ",Time,"\n"]),
+                            Message = lists:concat(["Client : ",ClientNumber,".Nachricht :", Number ,"te Nachricht C out: ",timeMilliSecond(),"\n"]),
                             Server ! {dropmessage, {Message, Number}},
-                            startEditor(ClientLog,Server,SentMsg + 1,NewList,FirstTimeout)
+                            startEditor(ClientLog,ClientNumber,Server,SentMsg + 1,NewList,FirstTimeout)
                     end;
     
             Any -> logging(ClientLog,"Failed to retrieve next message number!\n"),
-                startEditor(ClientLog,Server,SentMsg + 1,NumberList,FirstTimeout)
+                startEditor(ClientLog,ClientNumber,Server,SentMsg + 1,NumberList,FirstTimeout)
         end
 .
 
 
-startReader(NumberOfMessages,Server,NumberList,ClientLog,FirstTimeout) when (NumberOfMessages < 5) ->
-    logging(ClientLog,io:format("Started Reader Mod: ~p\n",[timeMilliSecond()])),
+startReader(NumberOfMessages,Server,NumberList,ClientLog,FirstTimeout,ClientNumber) when (NumberOfMessages < 5) ->
+    logging(ClientLog,lists:concat(["Started Reader Mod: ",timeMilliSecond(),"\n"])),
     Server ! {getmessages, self()},
     
     receive
         {reply,Number,Nachricht,Terminated} ->
             case (lists:member(Number,NumberList)) of 
-                true -> logging(ClientLog,io:format("~p ******* C in: ~p\n",[Nachricht,timeMilliSecond()]));
-                false -> logging(ClientLog,io:format("~p C in: ~p\n",[Number,Nachricht]))
+                true -> logging(ClientLog,lists:concat([Nachricht,"******* C in: ",timeMilliSecond(),"\n"]));
+                false -> logging(ClientLog,lists:concat([Nachricht," C in: ",timeMilliSecond(),"\n"]))
             end,
             
             case (Terminated == false) of
-                true -> startReader(NumberOfMessages,Server,NumberList,ClientLog,FirstTimeout);
-                false -> startEditor(ClientLog,Server,0,NumberList,FirstTimeout)
+                true -> startReader(NumberOfMessages,Server,NumberList,ClientLog,FirstTimeout,ClientNumber);
+                false -> startEditor(ClientLog,ClientNumber,Server,0,NumberList,FirstTimeout)
             end
     end
 .
