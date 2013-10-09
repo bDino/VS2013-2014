@@ -20,7 +20,7 @@ start(DLQCapacity) ->
 
     HoldBackQueu = emptySL(),
     DeliveryQueue = emptySL(),
-    
+    logging("server.log","...Clientmanager started ...\n"),
     loop(HoldBackQueu, DeliveryQueue, DLQCapacity)
 .
 

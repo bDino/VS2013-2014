@@ -20,7 +20,7 @@ start() ->
          %We received an answer from the server-node.
         pong ->
 
-            io:format("A connection to the server with PID ~p could be established :(. \n", [Servername]),
+            io:format("A connection to the server with PID ~p could be established :). \n", [Servername]),
             % Start the number of clients specified in the config file.
             spawnAllClients(Clients,Servername,NumberList,FirstTimeout,Lifetime);
 
@@ -37,7 +37,7 @@ spawnAllClients(ClientNumber,Server,NumberList,FirstTimeout,ClientLifetime) when
     spawnAllClients(ClientNumber - 1,Server,NumberList,FirstTimeout,ClientLifetime);
  
 spawnAllClients(1,Server,NumberList,FirstTimeout,ClientLifetime) ->
-    ClientLog = lists:concat("Client ~p.log",[1]),
+    ClientLog = lists:concat(["Client ",1,".log"]),
     ClientPID = spawn(fun() -> startEditor(ClientLog,Server,0,NumberList,FirstTimeout) end),
     timer:kill_after(ClientLifetime * 1000,ClientPID)   
 .

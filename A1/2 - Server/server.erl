@@ -28,9 +28,6 @@ start() ->
     ServerPID = spawn(fun() -> loop(ClientmanagerPID,QueuemanagerPID,0) end),
     %ServerPID = self(),
     
-    logging("server.log","...Queuemanager started ... \n"),
-    logging('server.log',"...Clientmanager started ...\n"),
-    
     global:register_name(Servername,ServerPID),
     logging("server.log","...Server started and registered with Servername ...\n"),
     
