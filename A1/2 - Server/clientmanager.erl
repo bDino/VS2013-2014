@@ -82,17 +82,17 @@ updateClientList([{CurrentClientId, Value}], ClientLifetime, List) ->
         Lifetime = currentTimeInSec()-Timestamp,
 	case (Lifetime > ClientLifetime) of
 		true -> NewList = List;
-		false -> NewList = orddict:store(CurrentClientId, {lastMsgId, Timestamp}, List)
+		false -> NewList = orddict:store(CurrentClientId, {LastMsgId, Timestamp}, List)
 	end, 
 	updateClientList([], ClientLifetime, NewList);
 	    
 updateClientList(ClientList, ClientLifetime, List) ->
         [{CurrentClientId, Value},_] = ClientList,
-        {lastMsgId, Timestamp} = Value,
+        {LastMsgId, Timestamp} = Value,
 	Lifetime = currentTimeInSec()-Timestamp,
 	case (Lifetime > ClientLifetime) of
 		true -> NewList = List;
-		false -> NewList = orddict:store(CurrentClientId, {lastMsgId, Timestamp}, List)
+		false -> NewList = orddict:store(CurrentClientId, {LastMsgId, Timestamp}, List)
 	end,
         Tail = orddict:erase(CurrentClientId,ClientList), 
 	updateClientList(Tail, ClientLifetime, NewList)
