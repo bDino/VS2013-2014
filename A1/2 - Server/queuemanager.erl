@@ -39,6 +39,7 @@ loop(HBQ,DLQ, DLQCapacity) ->
             logging("server.log",ModifiedMsg),
             Elem = {Number, ModifiedMsg},
             NewHBQ = pushSL(HBQ,Elem),
+            io:fwrite("HBQ: ~p\n",[NewHBQ]),
             
             
             case checkIfEnoughMessages(NewHBQ, DLQCapacity) of
