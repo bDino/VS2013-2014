@@ -12,19 +12,19 @@
 %% liest die Config-Datei aus und startet die Prozesse Queuemanager und Clientmanager
 %
 start() ->
-%Speichern der Configparameter
+    %Speichern der Configparameter
     {ok, Configlist} = file:consult("server.cfg"),
     {ok, Servername} = get_config_value(servername,Configlist),
     {ok, Lifetime} = get_config_value(lifetime,Configlist),
     {ok, DlqLimit} = get_config_value(dlqlimit,Configlist),
     {ok, Clientlifetime} = get_config_value(clientlifetime,Configlist),
-%Configuration fertig
+    %Configuration fertig
 
-%Serverkomponenten initialisieren
+    %Serverkomponenten initialisieren
     QueuemanagerPID = spawn_link(fun() -> queuemanager:start(DlqLimit) end),
     ClientmanagerPID = spawn_link(fun() -> clientmanager:start(Clientlifetime,QueuemanagerPID) end),
     ServerPID = spawn(fun() -> loop(ClientmanagerPID,QueuemanagerPID,0) end),
-	%ServerPID = self(),
+    %ServerPID = self(),
     
     logging("server.log","...Queuemanager started ... \n"),
     logging('server.log',"...Clientmanager started ...\n"),
@@ -70,5 +70,3 @@ loop(CManager,QManager,MessageNumber) ->
 %%    		exit("Lifetime is over")
     end
 .
-    
-%terminate(normal,state) -> ok.
