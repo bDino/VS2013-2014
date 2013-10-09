@@ -68,12 +68,16 @@ getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID) ->
 %% -------------------------------------------
 %% prüft ob sich in der Clientliste Clients aufhalten die länger als Lifetime nichts gesendet haben
 %% erstellt rekursiv eine Liste die nur die aktuellen Clients enthält und gibt diese zurück
-updateClientList(ClientList, ClientLifetime) -> updateClientList(ClientList, ClientLifetime, []).
+updateClientList(ClientList, ClientLifetime) -> io:fwrite("CLIENTLIST orm update: ~p",[ClientList]), 
+        updateClientList(ClientList, ClientLifetime, []).
 
 % ------
-updateClientList([],_,List) -> List;
+updateClientList([],_,List) -> 
+        io:write("CLIENTLIST ist leer und muss nicht geupdated werde"),
+        List;
 
 updateClientList([{CurrentClientId, Value}], ClientLifetime, List) ->
+        io:fwrite("CLIENTLIST hat nur einen Eintrag: ~p, ~p",[CurrentClientId, Value]),
 		{lastMsgId, Timestamp} = Value,
         Lifetime = currentTimeInSec()-Timestamp,
 	case (Lifetime > ClientLifetime) of
@@ -107,7 +111,8 @@ addClient(ClientId, LastMsgId, ClientList) ->
 %% gibt die aktuelle Zeit in Sekunden aus, um sie in der Clientliste zu speichern und mit der Variable Clientlifetime zu vergleichen
 currentTimeInSec() ->
 	{MegaSecs,Secs,MicroSecs} = now(),
-	((MegaSecs*1000000 + Secs)*1000000 + MicroSecs) / 1000000
+	%((MegaSecs*1000000 + Secs)*1000000 + MicroSecs) / 1000000
+        Secs
 .
 	
 	
