@@ -42,7 +42,7 @@ spawnAllClients(1,Server,NumberList,FirstTimeout,ClientLifetime) ->
 .
 
 startEditor(ClientLog,Server,SentMsg,NumberList,FirstTimeout) ->
-    io:fwrite("EDITOR with log ~p
+    io:fwrite("EDITOR with log ~p started\n",[ClientLog]),
     Server ! {getmsgid, self()},        
         receive
             {nnr, Number} -> 
