@@ -27,7 +27,7 @@ start(ClientLifetime, QueueManagerPID) ->
 %% -------------------------------------------
 %% loop-Funktion wird immer wieder aufgerufen und reagiert auf eingehende Nachrichten
 loop(ClientList, ClientLifetime, QueueManagerPID) ->
-        io:fwrite("CLIENTMANAGER im LOOP"),
+        io:fwrite("CLIENTMANAGER im LOOP\n"),
 	receive
 		{getmessages, ClientId, ServerPID} ->
                         io:fwrite("Server hat getmessages gesendet mit ClientId ~p und ServerId ~p\n", [ClientId, ServerPID]),

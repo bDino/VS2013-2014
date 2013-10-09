@@ -29,7 +29,7 @@ start(DLQCapacity) ->
 %% loop-Funktion des Queuemanagers wird immer wieder wiederholt
 %% reagiert im receive-Block auf an ihn gesendete Nachrichten
 loop(HBQ,DLQ, DLQCapacity) -> 
-
+    io:fwrite("QUEUEMANAGER im LOOP\n"),
     receive
     	%% dropmessage fügt der übergebenen Message einen Zeitstempel an und legt sie anschließend in der HBQ ab
     	%% wenn: HBQ > DLQCapacity/2 werden Messages aus der HBQ in die DLQ übertragen: transportToDLQ(?)
