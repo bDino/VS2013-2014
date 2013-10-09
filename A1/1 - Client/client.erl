@@ -1,9 +1,9 @@
 -module(client).
 -author("Milena Dreier, Dino Buskulic").
--export([start/1]).
+-export([start/0]).
 -import(werkzeug,[get_config_value/2,logging/2,logstop/0,timeMilliSecond/0,delete_last/1,shuffle/1,reset_timer/3,type_is/1,to_String/1,bestimme_mis/2]).
 
-start(ServerPID) ->
+start() ->
     {ok, ConfigListe} = file:consult("client.cfg"),
     {ok, Lifetime} = get_config_value(lifetime, ConfigListe),
     {ok, Servername} = get_config_value(servername, ConfigListe),
@@ -13,14 +13,16 @@ start(ServerPID) ->
     FirstTimeout = 2000 + random:uniform(2000),
     NumberList = [],
     
-    {_,ServerNode} = Servername,
+    {Name,ServerNode} = Servername,
     
     
     case net_adm:ping(ServerNode) of
          %We received an answer from the server-node.
         pong ->
-
-            io:format("A connection to the server with PID ~p could be established :). \n", [Servername]),
+            
+            ServerPID = global:whereis_name(Name),
+            io:format("A connection to the server with PID ~p and Name ~p could be established :). \n", [ServerPID, Name]),
+            
             % Start the number of clients specified in the config file.
             spawnAllClients(Clients,ServerPID,NumberList,FirstTimeout,Lifetime);
 
@@ -60,7 +62,10 @@ startEditor(ClientLog,Server,SentMsg,NumberList,FirstTimeout) ->
                             
                             startReader(0,Server,NumberList,ClientLog,FirstTimeout);
                         false ->
-                            Server ! {dropmessage, {io:format("~p : ~pte Nachricht C out: ~p.\n",[self(),Number,timeMilliSecond()])}},
+                            SelfPID = self(),
+                            Time = timeMilliSecond(),
+                            Message = lists:concat([SelfPID," : ",Number ,"te Nachricht C out: ",Time,"\n"]),
+                            Server ! {dropmessage, {Message, Number}},
                             startEditor(ClientLog,Server,SentMsg + 1,NewList,FirstTimeout)
                     end;
     

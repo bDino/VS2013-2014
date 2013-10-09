@@ -34,9 +34,11 @@ loop(HBQ,DLQ, DLQCapacity) ->
     	%% dropmessage fügt der übergebenen Message einen Zeitstempel an und legt sie anschließend in der HBQ ab
     	%% wenn: HBQ > DLQCapacity/2 werden Messages aus der HBQ in die DLQ übertragen: transportToDLQ(?)
         {dropmessage, {Message, Number}} ->
+            io:fwrite("DROPMESSAGE im queuemanager mit Message Number ~p\n",[Number]),
             ModifiedMsg = io:format("~p HBQ in : ~p",[Message,timeMilliSecond()]),
             logging("server.log",ModifiedMsg),
             NewHBQ = pushSL(HBQ,{Number,ModifiedMsg}),
+            
             
             case checkIfEnoughMessages(NewHBQ, DLQCapacity) of
             	true -> transportToDLQ(NewHBQ, DLQ, DLQCapacity);
@@ -76,6 +78,7 @@ loop(HBQ,DLQ, DLQCapacity) ->
 %% Kontrolliert ob Nachrichten aus der HBQ in die DLQ gepackt werden können, dh ob |HBQ| > Kapazität(DLQ)
 checkIfEnoughMessages(HBQ, DLQCapacity) ->
 	Length = lengthSL(HBQ),
+        io:fwrite("CHECKIFENOUGHMESSAGES! Länge HBQ: ~p\n",[Length]),
 	Length > DLQCapacity/2
 .
 
