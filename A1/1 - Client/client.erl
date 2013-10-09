@@ -31,14 +31,14 @@ start() ->
     
 
 spawnAllClients(ClientNumber,Server,NumberList,FirstTimeout,ClientLifetime) when (ClientNumber > 1) ->
-    ClientLog = lists:concat("Client ~p.log",[ClientNumber]),
+    ClientLog = lists:concat(["Client ",ClientNumber,".log"]),
     ClientPID = spawn(fun() -> startEditor(ClientLog,Server,0,NumberList,FirstTimeout) end),
     timer:kill_after(ClientLifetime * 1000,ClientPID),
     spawnAllClients(ClientNumber - 1,Server,NumberList,FirstTimeout,ClientLifetime);
  
 spawnAllClients(1,Server,NumberList,FirstTimeout,ClientLifetime) ->
-    ClientLog = lists:concat("Client ~p.log",[ClientNumber]),
-    ClientPID = spawn(fun() -> startEditor(io:format(ClientLog,Server,0,NumberList,FirstTimeout) end),
+    ClientLog = lists:concat("Client ~p.log",[1]),
+    ClientPID = spawn(fun() -> startEditor(ClientLog,Server,0,NumberList,FirstTimeout) end),
     timer:kill_after(ClientLifetime * 1000,ClientPID)   
 .
 
