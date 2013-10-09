@@ -8,7 +8,7 @@
 %%TODO: Client vergessen!
 
 %% -------------------------------------------
-% Clientmanager
+%  Clientmanager
 %% -------------------------------------------
 %%
 %% -------------------------------------------
@@ -68,12 +68,12 @@ getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID) ->
 %% -------------------------------------------
 %% prüft ob sich in der Clientliste Clients aufhalten die länger als Lifetime nichts gesendet haben
 %% erstellt rekursiv eine Liste die nur die aktuellen Clients enthält und gibt diese zurück
-updateClientList(ClientList, ClientLifetime) -> io:fwrite("CLIENTLIST orm update: ~p",[ClientList]), 
+updateClientList(ClientList, ClientLifetime) -> io:fwrite("CLIENTLIST vorm update: ~p",[ClientList]), 
         updateClientList(ClientList, ClientLifetime, []).
 
 % ------
 updateClientList([],_,List) -> 
-        io:write("CLIENTLIST ist leer und muss nicht geupdated werde"),
+        io:fwrite("CLIENTLIST ist leer und muss nicht geupdated werde\n"),
         List;
 
 updateClientList([{CurrentClientId, Value}], ClientLifetime, List) ->

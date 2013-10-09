@@ -26,7 +26,6 @@ start() ->
     QueuemanagerPID = spawn(fun() -> queuemanager:start(DlqLimit) end),
     ClientmanagerPID = spawn(fun() -> clientmanager:start(Clientlifetime,QueuemanagerPID) end),
     ServerPID = spawn(fun() -> loop(ClientmanagerPID,QueuemanagerPID,0) end),
-    %ServerPID = self(),
     
     global:register_name(Servername,ServerPID),
     logging("server.log","...Server started and registered with Servername ...\n"),
@@ -42,14 +41,14 @@ loop(CManager,QManager,MessageNumber) ->
     receive
         {getmsgid, ClientPID} -> 
             %logging("server.log","Server: Received getmsgid\n"),
-            logging("server.log",io:format("~p : Server: Received getmsgid:~p ! ~p\n" ,[timeMilliSecond(),ClientPID, MessageNumber])),
+            logging("server.log",lists:concat([timeMilliSecond()," : Server: Received getmsgid: ",ClientPID," ! ",MessageNumber,"\n" ])),
             ClientPID ! {nnr,MessageNumber},
             NewMsgNr = MessageNumber+1,
             loop(CManager, QManager, NewMsgNr);
 
         {getmessages,ClientPID} ->
             %logging("server.log","Server: Received getmessages\n"),
-            logging("server.log",io:format("~p : Server: Received getmessages:~p\n" ,[timeMilliSecond(),ClientPID])),
+            logging("server.log",lists:concat([timeMilliSecond()," : Server: Received getmessages: ",ClientPID,"\n"])),
             CManager ! {getmessages, ClientPID, self()},
             receive
                 {Message,MsgId,Terminated} ->
@@ -60,15 +59,12 @@ loop(CManager,QManager,MessageNumber) ->
             loop(CManager, QManager, MessageNumber);
         
         {dropmessage, {Nachricht, Nr}} -> 
-            logging("server.log",io:format("~p : Server: Received dropmessages:~p\n" ,[timeMilliSecond(),Nachricht])),
+            logging("server.log",lists:concat([timeMilliSecond()," : Server: Received dropmessage: ",Nachricht,"\n"])),
             QManager ! {dropmessage, {Nachricht, Nr}},
         
             loop(CManager, QManager, MessageNumber)
-%%    after 
-%%    	1000*100000000 ->
-%%    		logging("server.log",io:format("Lifetime is over. Server ~p terminates" ,[self()])),
-%%    		exit("Lifetime is over")
+        exit -> 
+            logging("server.log",lists:concat([timeMilliSecond()," : Server Received Exit Signal and is Shuting down"]),
+            exit("Serverlifetime is over")
     end
 .
-    
-%terminate(normal,state) -> ok.

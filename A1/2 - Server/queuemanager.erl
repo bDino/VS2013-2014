@@ -20,7 +20,7 @@ start(DLQCapacity) ->
 
     HoldBackQueu = emptySL(),
     DeliveryQueue = emptySL(),
-    logging("server.log","...Clientmanager started ...\n"),
+    logging("server.log","...Queuemanager started ...\n"),
     loop(HoldBackQueu, DeliveryQueue, DLQCapacity)
 .
 
@@ -103,7 +103,7 @@ transportToDLQ(HBQ, DLQ, DLQCapacity) ->
 %% Fehlermeldung bekommt MsgId der letzten nicht übertragenden Nachricht aus dieser Lücke
 %% TODO: Client könnte denken dass das seine Nachricht ist und sie dementsprechend anders ausgeben	
 fillOffset(HBQ, DLQ, NewKey,MinNrHBQ, DLQCapacity) ->
-        Message = io:format("***Fehlernachricht fuer Nachrichtennummern ~p bis ~p um 16.05 18:01:30,580",[NewKey,MinNrHBQ-1]),
+        Message = lists:concat(["***Fehlernachricht fuer Nachrichtennummer ",NewKey," bis ",MinNrHBQ-1," um ",timeMilliSecond]),
         logging("server.log",Message),
 	ReadyDLQ = deleteIfFull(DLQ, DLQCapacity),
 	NewDLQ = pushSL(ReadyDLQ, {MinNrHBQ-1,Message}),
@@ -118,7 +118,7 @@ transport(HBQ, DLQ,MinNrHBQ, DLQCapacity) ->
 	Element = findSL(HBQ, MinNrHBQ),
 	Tail = popSL(HBQ),
 	ReadyDLQ = deleteIfFull(DLQ, DLQCapacity),
-        ModifiedMsg = io:format("~p DLQ in : ~p",[Element, timeMilliSecond()]),
+        ModifiedMsg = lists:concat([Element," DLQ in : ",timeMilliSecond()]),
         logging("server.log",ModifiedMsg),
 	NewDLQ = pushSL(ReadyDLQ,{MinNrHBQ,  ModifiedMsg}),
 	

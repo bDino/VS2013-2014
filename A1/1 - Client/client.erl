@@ -3,6 +3,14 @@
 -export([start/0]).
 -import(werkzeug,[get_config_value/2,logging/2,logstop/0,timeMilliSecond/0,delete_last/1,shuffle/1,reset_timer/3,type_is/1,to_String/1,bestimme_mis/2]).
 
+%% -------------------------------------------
+% Client
+%% -------------------------------------------
+%%
+%% -------------------------------------------
+%% startet den Client
+%% liest die Config-Datei aus und startet den client im Editor Mode
+%
 start() ->
     {ok, ConfigListe} = file:consult("client.cfg"),
     {ok, Lifetime} = get_config_value(lifetime, ConfigListe),
@@ -58,6 +66,7 @@ startEditor(ClientLog,ClientNumber,Server,SentMsg,NumberList,FirstTimeout) ->
                             logging(ClientLog,lists:concat(["Set Client to Sleep: ",SleepTime,"\n"])),
                             timer:sleep(SleepTime),
                             
+                            logging(ClientLog,lists:concat(["Started Reader Mod at: ",timeMilliSecond(),"\n"])),
                             startReader(0,Server,NumberList,ClientLog,FirstTimeout,ClientNumber);
                         false ->
                             Message = lists:concat(["Client : ",ClientNumber,".Nachricht :", Number ,"te Nachricht C out: ",timeMilliSecond(),"\n"]),
@@ -73,7 +82,6 @@ startEditor(ClientLog,ClientNumber,Server,SentMsg,NumberList,FirstTimeout) ->
 
 
 startReader(NumberOfMessages,Server,NumberList,ClientLog,FirstTimeout,ClientNumber) when (NumberOfMessages < 5) ->
-    logging(ClientLog,lists:concat(["Started Reader Mod: ",timeMilliSecond(),"\n"])),
     Server ! {getmessages, self()},
     
     receive
