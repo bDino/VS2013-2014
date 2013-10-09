@@ -15,6 +15,7 @@ start() ->
     
     {_,ServerNode} = Servername,
     
+    
     case net_adm:ping(ServerNode) of
          %We received an answer from the server-node.
         pong ->
