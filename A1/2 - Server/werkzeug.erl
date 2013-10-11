@@ -151,17 +151,17 @@ shuffle(List, Acc) ->
 % Wenn ElemNr des Elementes aus der SL groesser oder gleich ist, als die des
 % einzufügenden Elementes, füge das Element per Rekursion rechts davon ein
 pushSL([{ElemNr, Elem}|TSL], {NElemNr,NElem}) when ElemNr >= NElemNr ->
-        io:write("WERKZEUG: neues element ist kleiner als erstes\n"),
+        io:fwrite("WERKZEUG: neues element ist kleiner als erstes\n"),
 	[{ElemNr, Elem}|pushSL(TSL,{NElemNr,NElem})];
 % Wenn ElemNr des Elementes aus der SL kleiner ist, als die des
 % einzufügenden Elementes, füge das Element direkt vor diesem Element(links) davon ein
 pushSL([{ElemNr, Elem}|TSL], {NElemNr,NElem}) when ElemNr < NElemNr ->
-        io:write("WERKZEUG: neues element ist größer als erstes\n"),
+        io:fwrite("WERKZEUG: neues element ist größer als erstes\n"),
 	[{NElemNr,NElem},{ElemNr, Elem}|TSL];
 % Wenn Keine der vorhandenen Nachrichten eine kleinere Elementnummer
 % hat, füge das neue Element ans Ende der SL ein
 pushSL([], {NElemNr,NElem}) ->
-        io:write("WERKZEUG: Liste war leer\n"),
+        io:fwrite("WERKZEUG: Liste war leer\n"),
 	[{NElemNr,NElem}].
 
 %%popSL loescht Element mit kleinster Nummer, also letztes Element

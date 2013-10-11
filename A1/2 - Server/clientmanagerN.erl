@@ -25,7 +25,7 @@
 %% mithilfe der letzten Nachrichten Nummer und des Queuemanagers wird die Nachricht ermittelt
 getmessages(ClientId, ClientList, ClientLifetime) ->
 	io:fwrite("Clientmanager sucht letzte nachrichten nummer von Client ~p\n",[ClientId]),
-        NewClientList = updateClientList(ClientList, ClientLifetime)
+        NewClientList = updateClientList(ClientList, ClientLifetime),
 	case orddict:is_key(ClientId, ClientList) of
 		true ->
 			io:fwrite("Client ~p ist in Clientliste ~p vorhand\n",[ClientId, ClientList]),
