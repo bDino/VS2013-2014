@@ -38,14 +38,16 @@ loop(HBQ,DLQ, DLQCapacity) ->
             ModifiedMsg = lists:concat([Message,". HBQ in : ",timeMilliSecond()]),
             logging("server.log",ModifiedMsg),
             Elem = {Number, ModifiedMsg},
-            NewHBQ = pushSL(HBQ,Elem),
-            io:fwrite("HBQ: ~p\n",[NewHBQ]),
+            UpdatedHBQ = pushSL(HBQ,Elem),
+            io:fwrite("HBQ: ~p\n",[UpdatedHBQ]),
             
             
-            case checkIfEnoughMessages(NewHBQ, DLQCapacity) of
-            	true -> transportToDLQ(NewHBQ, DLQ, DLQCapacity);
-            	false -> loop(HBQ,DLQ, DLQCapacity)
-            end;
+            case checkIfEnoughMessages(UpdatedHBQ, DLQCapacity) of
+            	true -> {NewHBQ, NewDLQ} = transportToDLQ(UpdatedHBQ, DLQ, DLQCapacity);
+            	false -> NewDLQ = DLQ,
+                         NewHBQ = UpdatedHBQ
+            end,
+            loop(NewHBQ, NewDLQ, DLQCapacity);
          
         %% getmessagesbynumber bekommt die Nummer der zuletzt erhaltenen Nachricht übergeben und gibt die Nachricht aus 
         %% die sich als nächstes in der DLQ befindet   
@@ -93,52 +95,39 @@ transportToDLQ(HBQ, DLQ, DLQCapacity) ->
         MinNrHBQ = minNrSL(HBQ),
 	
 	case (MinNrHBQ-NewKey) > 1 of
-            true ->     fillOffset(HBQ, DLQ, NewKey,MinNrHBQ, DLQCapacity);
-            false ->    transport(HBQ, DLQ, MinNrHBQ, DLQCapacity)
-	end
+            true ->     %%fillOffset(HBQ, DLQ, NewKey,MinNrHBQ, DLQCapacity);
+                        ModifiedMsg = lists:concat(["***Fehlernachricht fuer Nachrichtennummer ",NewKey," bis ",MinNrHBQ-1," um ",timeMilliSecond]),
+                        logging("server.log",Message),
+                        ReadyDLQ = deleteIfFull(DLQ, DLQCapacity),
+                        NewDLQ = pushSL(ReadyDLQ, {MinNrHBQ-1,Message}),
+                        NewHBQ = HBQ;
+            false ->    %transport(HBQ, DLQ, MinNrHBQ, DLQCapacity)
+                        NewHBQ = HBQ,
+                        NewDLQ = DLQ,
+	end,
+        NewDLQ = pushSL(ReadyDLQ, {MinNrHBQ-1, ModifiedMsg}),
+        transport_rek(NewHBQ, NewDLQ, MinNrHBQ-1, DLQCapacity)
+    %Rückgabe = NewDLQ
 .
 
-%% -------------------------------------------
-%% Füllt die Lücke zwischen DLQ und HBQ mit einer entsprechenden Fehlermeldung
-%% Fehlermeldung bekommt MsgId der letzten nicht übertragenden Nachricht aus dieser Lücke
-%% TODO: Client könnte denken dass das seine Nachricht ist und sie dementsprechend anders ausgeben	
-fillOffset(HBQ, DLQ, NewKey,MinNrHBQ, DLQCapacity) ->
-        Message = lists:concat(["***Fehlernachricht fuer Nachrichtennummer ",NewKey," bis ",MinNrHBQ-1," um ",timeMilliSecond]),
-        logging("server.log",Message),
-	ReadyDLQ = deleteIfFull(DLQ, DLQCapacity),
-	NewDLQ = pushSL(ReadyDLQ, {MinNrHBQ-1,Message}),
-	transport(HBQ, NewDLQ, MinNrHBQ, DLQCapacity)
-.
 
-%% -------------------------------------------
-%% Schreibt das erste Element aus der HBQ in die DLQ
-transport(HBQ, DLQ,MinNrHBQ, DLQCapacity) ->
-        io:fwrite("TRANSPORT FROM HBQ TO DLQ ~p\n",[MinNrHBQ]),
-       		
-	Element = findSL(HBQ, MinNrHBQ),
-	Tail = popSL(HBQ),
-	ReadyDLQ = deleteIfFull(DLQ, DLQCapacity),
-        ModifiedMsg = lists:concat([Element," DLQ in : ",timeMilliSecond()]),
-        logging("server.log",ModifiedMsg),
-	NewDLQ = pushSL(ReadyDLQ,{MinNrHBQ,  ModifiedMsg}),
-	
-	transport_rek(Tail, NewDLQ, MinNrHBQ, DLQCapacity)
-.
 
 %% --------
 %% Schreibt solange Elemente aus der HBQ in die DLQ bis eine Lücke erreicht wurde oder die HBQ leer ist
 %% Ruft anschließend wieder die loop-Funktion auf
-transport_rek(HBQ, DLQ, LastHead, DLQCapacity) ->
+transport_rek(HBQ, DLQ, LastMsgID, DLQCapacity) ->
         io:fwrite("TRANSPORT REKURSIVE FROM HBQ TO DLQ ~p\n",[LastHead]),
-	Head = minNrSL(HBQ),
-	case Head == (LastHead+1) of
-            true -> Element = findSL(HBQ,Head),
-                            Tail = popSL(HBQ),
-                            ReadyDLQ = deleteIfFull(DLQ, DLQCapacity),
-                            NewDLQ = pushSL(ReadyDLQ,{Head,Element}),
-                            transport_rek(Tail, NewDLQ, Head, DLQCapacity);
-            false -> loop(HBQ, DLQ, DLQCapacity)
+	MsgId = minNrSL(HBQ),
+	case MsgId == (LastMsgID+1) of
+            true ->     Message = findSL(HBQ,Head),
+                        NewHBQ = popSL(HBQ),
+                        ReadyDLQ = deleteIfFull(DLQ, DLQCapacity),
+                        ModifiedMsg = lists:concat([Message," DLQ in : ",timeMilliSecond()]),
+                        NewDLQ = pushSL(ReadyDLQ,{MsgId,ModifiedMsg}),
+                        transport_rek(Tail, NewDLQ, Head, DLQCapacity);
+            false ->    {HBQ, DLQ}
 	end
+        
 .
 
 %% -------------------------------------------
@@ -154,7 +143,31 @@ deleteIfFull(DLQ, DLQCapacity) ->
 .
 
 
+%% -------------------------------------------
+%% Schreibt das erste Element aus der HBQ in die DLQ
+%%transport(HBQ, DLQ,MinNrHBQ, DLQCapacity) ->
+%%        io:fwrite("TRANSPORT FROM HBQ TO DLQ ~p\n",[MinNrHBQ]),
+%%       		
+%%	Element = findSL(HBQ, MinNrHBQ),
+%%	Tail = popSL(HBQ),
+%%	ReadyDLQ = deleteIfFull(DLQ, DLQCapacity),
+%%        ModifiedMsg = lists:concat([Element," DLQ in : ",timeMilliSecond()]),
+%%        logging("server.log",ModifiedMsg),
+%%	NewDLQ = pushSL(ReadyDLQ,{MinNrHBQ,  ModifiedMsg}),
+%%	
+%%	transport_rek(Tail, NewDLQ, MinNrHBQ, DLQCapacity)
+%%.
 
 
-	
+%% -------------------------------------------
+%% Füllt die Lücke zwischen DLQ und HBQ mit einer entsprechenden Fehlermeldung
+%% Fehlermeldung bekommt MsgId der letzten nicht übertragenden Nachricht aus dieser Lücke
+%% TODO: Client könnte denken dass das seine Nachricht ist und sie dementsprechend anders ausgeben	
+%%fillOffset(HBQ, DLQ, NewKey,MinNrHBQ, DLQCapacity) ->
+%%        Message = lists:concat(["***Fehlernachricht fuer Nachrichtennummer ",NewKey," bis ",MinNrHBQ-1," um ",timeMilliSecond]),
+%%        logging("server.log",Message),
+%%	ReadyDLQ = deleteIfFull(DLQ, DLQCapacity),
+%%	NewDLQ = pushSL(ReadyDLQ, {MinNrHBQ-1,Message}),
+%%	transport(HBQ, NewDLQ, MinNrHBQ, DLQCapacity)
+%%.	
     
