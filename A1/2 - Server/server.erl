@@ -21,8 +21,6 @@ start() ->
     %Configuration fertig
 
     %Serverkomponenten initialisieren
-    %QueuemanagerPID = spawn_link(fun() -> queuemanager:start(DlqLimit) end),
-    %ClientmanagerPID = spawn_link(fun() -> clientmanager:start(Clientlifetime,QueuemanagerPID) end),
     QueuemanagerPID = spawn(fun() -> queuemanager:start(DlqLimit) end),
     ClientmanagerPID = spawn(fun() -> clientmanager:start(Clientlifetime,QueuemanagerPID) end),
     ServerPID = spawn(fun() -> loop(ClientmanagerPID,QueuemanagerPID,0) end),
@@ -30,7 +28,6 @@ start() ->
     global:register_name(Servername,ServerPID),
     logging("server.log","...Server started and registered with Servername ...\n"),
     
-    %loop(ClientmanagerPID,QueuemanagerPID,0)
     ServerPID
 .
 

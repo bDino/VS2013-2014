@@ -30,7 +30,6 @@ start(ClientLifetime, QueueManagerPID) ->
 loop(ClientList, ClientLifetime, QueueManagerPID) ->
 	receive
             {getmessages, ClientId, ServerPID} ->
-                    io:fwrite("Server hat getmessages gesendet mit ClientId ~p und ServerId ~p\n", [ClientId, ServerPID]),
                     NewClientList = updateClientList(ClientList, ClientLifetime),
                     getmessages(ClientId, NewClientList, ClientLifetime, QueueManagerPID, ServerPID)		
 	end  
@@ -41,10 +40,8 @@ loop(ClientList, ClientLifetime, QueueManagerPID) ->
 %% ist der Client nicht in der Liste ist seine letzte Nachrichtennummer 0 und er wird in die Liste aufgenommen
 %% mithilfe der letzten Nachrichten Nummer und des Queuemanagers wird die Nachricht ermittelt
 getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID) ->
-	io:fwrite("Client ~p fragt seine nächste Nachricht ab\n",[ClientId]),
 	case orddict:is_key(ClientId, ClientList) of
 		true ->
-			io:fwrite("Client ~p ist in Clientliste ~p vorhand\n",[ClientId, ClientList]),
 			{LastMsgId, Timestamp} = orddict:fetch(ClientId, ClientList);
 		false -> 
 			LastMsgId = 0
@@ -55,10 +52,10 @@ getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID) ->
 	
 	receive
 		{Message, NewMsgId, Terminated} ->
+                io:format("CMANAGER RECEIVED MSGID: ~p\n",[NewMsgId]),
 		    {MsgId, NewTimestamp} = orddict:fetch(ClientId, NewClientList),
 			ClientListWithNewMsgId = orddict:store(ClientId, {NewMsgId, NewTimestamp}, NewClientList),
-            io:fwrite("CLientmanager hat Message vom QeueuManager bekommen und sendet an ServerPID: ~p\n",[ServerPID]),
-			ServerPID ! {Message, NewMsgId, Terminated}
+                       ServerPID ! {Message, NewMsgId, Terminated}
 	end,
 			 
 	loop(ClientListWithNewMsgId, ClientLifetime, QueueManagerPID)
