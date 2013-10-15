@@ -40,15 +40,13 @@ start() ->
 loop(CManager,QManager,MessageNumber) ->
     receive
         {getmsgid, ClientPID} -> 
-            %logging("server.log","Server: Received getmsgid\n"),
-            logging("server.log",lists:concat([timeMilliSecond()," : Server: Received getmsgid: ",ClientPID," ! ",MessageNumber,"\n" ])),
+            logging("server.log",lists:concat(["Server: Received getmsgid von Client: ",pid_to_list(ClientPID)," ! ",MessageNumber,"\n"])),
             ClientPID ! {nnr,MessageNumber},
             NewMsgNr = MessageNumber+1,
             loop(CManager, QManager, NewMsgNr);
 
         {getmessages,ClientPID} ->
-            %logging("server.log","Server: Received getmessages\n"),
-            logging("server.log",lists:concat([timeMilliSecond()," : Server: Received getmessages: ",ClientPID,"\n"])),
+            logging("server.log",lists:concat(["Server: Received getmessages von Client: ",pid_to_list(ClientPID),"\n"])),
             CManager ! {getmessages, ClientPID, self()},
             receive
                 {Message,MsgId,Terminated} ->
@@ -59,12 +57,12 @@ loop(CManager,QManager,MessageNumber) ->
             loop(CManager, QManager, MessageNumber);
         
         {dropmessage, {Nachricht, Nr}} -> 
-            logging("server.log",lists:concat([timeMilliSecond()," : Server: Received dropmessage: ",Nachricht,"\n"])),
+            logging("server.log",lists:concat(["Server: Received dropmessage: ",Nachricht,"\n"])),
             QManager ! {dropmessage, {Nachricht, Nr}},
         
-            loop(CManager, QManager, MessageNumber)
+            loop(CManager, QManager, MessageNumber);
         exit -> 
-            logging("server.log",lists:concat([timeMilliSecond()," : Server Received Exit Signal and is Shuting down"]),
+            logging("server.log",lists:concat(["Server Received Exit Signal and is Shuting down\n"])),
             exit("Serverlifetime is over")
     end
 .

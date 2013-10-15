@@ -32,8 +32,7 @@ loop(ClientList, ClientLifetime, QueueManagerPID) ->
             {getmessages, ClientId, ServerPID} ->
                     io:fwrite("Server hat getmessages gesendet mit ClientId ~p und ServerId ~p\n", [ClientId, ServerPID]),
                     NewClientList = updateClientList(ClientList, ClientLifetime),
-                    getmessages(ClientId, NewClientList, ClientLifetime, QueueManagerPID, ServerPID)
-		
+                    getmessages(ClientId, NewClientList, ClientLifetime, QueueManagerPID, ServerPID)		
 	end  
 .
 	

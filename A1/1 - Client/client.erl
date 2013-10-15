@@ -22,18 +22,25 @@ start() ->
     NumberList = [],
     
     {Name,ServerNode} = Servername,
+    net_adm:ping(ServerNode),
+    timer:sleep(1000),
     
-    
+    %Verbindungsaufbau zum Server
     case net_adm:ping(ServerNode) of
          %We received an answer from the server-node.
         pong ->
             
             ServerPID = global:whereis_name(Name),
-            io:format("A connection to the server with PID ~p and Name ~p could be established :). \n", [ServerPID, Name]),
-            
-            % Start the number of clients specified in the config file.
-            spawnAllClients(Clients,ServerPID,NumberList,FirstTimeout,Lifetime);
-
+                
+                case ServerPID == undefined of
+                
+                    true -> io:format("The PID For the Server ~p could not be retrieved!",[Name]);
+                    false -> io:format("A connection to the server with PID ~p and Name ~p could be established :). \n", [ServerPID, Name]),
+                
+                            % Start the number of clients specified in the config file.
+                            spawnAllClients(Clients,ServerPID,NumberList,FirstTimeout,Lifetime)
+                end;
+                    
         % The server-node failed to answer :(.
         pang -> io:format("A connection to the server with PID ~p could not be established :(. \n", [Servername])
     end
@@ -69,7 +76,7 @@ startEditor(ClientLog,ClientNumber,Server,SentMsg,NumberList,FirstTimeout) ->
                             logging(ClientLog,lists:concat(["Started Reader Mod at: ",timeMilliSecond(),"\n"])),
                             startReader(0,Server,NumberList,ClientLog,FirstTimeout,ClientNumber);
                         false ->
-                            Message = lists:concat(["Client : ",ClientNumber,".Nachricht :", Number ,"te Nachricht C out: ",timeMilliSecond(),"\n"]),
+                            Message = lists:concat(["Client: ",pid_to_list(self())," .Nachricht :", Number ,"te Nachricht C out: ",timeMilliSecond()]),
                             logging(ClientLog,Message),
                             Server ! {dropmessage, {Message, Number}},
                             startEditor(ClientLog,ClientNumber,Server,SentMsg + 1,NewList,FirstTimeout)
