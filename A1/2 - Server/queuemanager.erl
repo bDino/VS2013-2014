@@ -88,6 +88,7 @@ checkIfEnoughMessages(HBQ, DLQCapacity) ->
 %% Fehlernachricht
 transportToDLQ(HBQ, DLQ, DLQCapacity) ->
         
+        %Abbruchbedingung für die Rekursion -> nur so lange übertragen bis die HBQ length noch ok ist
         case lengthSL(HBQ) > DLQCapacity/2 of
             true ->
                 LastKey = maxNrSL(DLQ),
@@ -104,21 +105,11 @@ transportToDLQ(HBQ, DLQ, DLQCapacity) ->
                                 transportToDLQ(NewHBQ,NewDLQ,DLQCapacity);
                     
                     false ->    %Wenn eine Lücke enstanden ist, pushe Fehlernachricht in die DLQ mit der Nummer der letzten Nachricht
-                                io:format("IN TRANSPORT ONCE FALSE\n"),
-                                ModifiedMsg = lists:concat(["*****Fehlernachricht fuer Nachrichtennummer ",NewKey," bis ",MinNrHBQ," um ",timeMilliSecond]),
+                                ModifiedMsg = lists:concat(["*****Fehlernachricht fuer Nachrichtennummer ",MinNrHBQ," bis ",NewKey," um ",timeMilliSecond]),
                                 logging("server.log",ModifiedMsg),
                                 ReadyDLQ = pushSL(DLQ, {MinNrHBQ,ModifiedMsg}),
-                                %NewDLQ = pushSL(ReadyDLQ, {MinNrHBQ-1,ModifiedMsg}),
-                                %NewHBQ = HBQ,
-                                io:fwrite("----------NEW DLQ: ~p\n",[ReadyDLQ]),
                                 transportToDLQ(HBQ,ReadyDLQ,DLQCapacity)
-                    %false ->    %transport(HBQ, DLQ, MinNrHBQ, DLQCapacity)
-                     %           NewHBQ = HBQ,
-                      %          NewDLQ = DLQ
                 end;
-                %NewDLQ = pushSL(ReadyDLQ, {MinNrHBQ-1, ModifiedMsg}),
-                %transport_rek(NewHBQ, NewDLQ, MinNrHBQ-1, DLQCapacity)
-                %Rückgabe = NewDLQ
     
         false -> {HBQ,DLQ}
     
@@ -127,9 +118,13 @@ transportToDLQ(HBQ, DLQ, DLQCapacity) ->
 .       
 
 transportOnceFromHBQtoDLQ(HBQ,DLQ) ->
-    NewDLQElem = popfiSL(HBQ),
+    Nr = minNrSL(HBQ),
+    NewDLQElem = findneSL(HBQ,Nr),
+    io:format("NEW ELEMENT NACH POPFI: ~p",[NewDLQElem]),
     NewDLQ = pushSL(DLQ,NewDLQElem),
+    io:format("NEW DLQ NACH PUSHSL: ~p",[NewDLQ]),
     NewHBQ = popSL(HBQ),
+    io:format("NEW HBQ NACH POPFI: ~p",[NewHBQ]),
     {NewHBQ,NewDLQ}
 .
 

@@ -94,8 +94,8 @@ startReader(NumberOfMessages,Server,NumberList,ClientLog,FirstTimeout,ClientNumb
     receive
         {reply,Number,Nachricht,Terminated} ->
             case (lists:member(Number,NumberList)) of 
-                true -> logging(ClientLog,lists:concat([Nachricht,"******* C in: ",timeMilliSecond(),"\n"]));
-                false -> logging(ClientLog,lists:concat([Nachricht," C in: ",timeMilliSecond(),"\n"]))
+                true -> logging(ClientLog,lists:concat([to_String(Nachricht),"******* C in: ",timeMilliSecond(),"\n"]));
+                false -> logging(ClientLog,lists:concat([to_String(Nachricht)," C in: ",timeMilliSecond(),"\n"]))
             end,
             
             case (Terminated == false) of

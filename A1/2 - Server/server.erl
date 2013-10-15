@@ -50,7 +50,6 @@ loop(CManager,QManager,MessageNumber) ->
             CManager ! {getmessages, ClientPID, self()},
             receive
                 {Message,MsgId,Terminated} ->
-                    io:fwrite("Server hat Message vom ClientManager bekommen: ~p\n",[MsgId]),
                     ClientPID ! {reply,MsgId,Message,Terminated}
             end,
             
