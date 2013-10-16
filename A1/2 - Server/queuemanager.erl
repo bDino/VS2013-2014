@@ -161,7 +161,7 @@ transportToDLQ(HBQ, DLQ, DLQCapacity) ->
 	NewKey = LastKey+1,
         MinNrHBQ = minNrSL(HBQ),
 	
-	case (MinNrHBQ-NewKey) > 1 of
+	case (MinNrHBQ-NewKey) > 0 of
             true ->     %%fillOffset(HBQ, DLQ, NewKey,MinNrHBQ, DLQCapacity);
                         ModifiedMsg = lists:concat(["***Fehlernachricht fuer Nachrichtennummer ",NewKey," bis ",MinNrHBQ-1," um ",timeMilliSecond]),
                         logging("server.log",ModifiedMsg),
