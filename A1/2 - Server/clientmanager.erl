@@ -44,7 +44,7 @@ getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID) ->
 		true ->
 			{LastMsgId, Timestamp} = orddict:fetch(ClientId, ClientList);
 		false -> 
-			LastMsgId = 0
+			LastMsgId = -1
 		end,
 	
 	NewClientList = addClient(ClientId, LastMsgId, ClientList),
@@ -52,7 +52,7 @@ getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID) ->
 	
 	receive
 		{Message, NewMsgId, Terminated} ->
-                io:format("CMANAGER RECEIVED MSGID: ~p\n",[NewMsgId]),
+                io:format("CMANAGER RECEIVED MSG ~p: ~p\n und TERMINATED IS ~p\n",[NewMsgId, Message, Terminated]),
 		    {MsgId, NewTimestamp} = orddict:fetch(ClientId, NewClientList),
 			ClientListWithNewMsgId = orddict:store(ClientId, {NewMsgId, NewTimestamp}, NewClientList),
                        ServerPID ! {Message, NewMsgId, Terminated}
