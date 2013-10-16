@@ -48,15 +48,15 @@ getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID) ->
 		end,
 	
 	NewClientList = addClient(ClientId, LastMsgId, ClientList),
-        io:fwrite("QUEUEMANAGER wird aufgefordert die Message zur letzten Nummer: ~p auszugeben \n", [LastMsgId]),
+        %io:fwrite("QUEUEMANAGER wird aufgefordert die Message zur letzten Nummer: ~p auszugeben \n", [LastMsgId]),
 	QueueManagerPID ! {getmessagesbynumber, LastMsgId, self()},
 	
 	receive
 		{Message, NewMsgId, Terminated} ->
-                io:format("CMANAGER RECEIVED MSG ~p: ~p\n und TERMINATED IS ~p\n",[NewMsgId, Message, Terminated]),
+                %io:format("CMANAGER RECEIVED MSG ~p: ~p\n und TERMINATED IS ~p\n",[NewMsgId, Message, Terminated]),
                 {MsgId, NewTimestamp} = orddict:fetch(ClientId, NewClientList),
                 ClientListWithNewMsgId = orddict:store(ClientId, {NewMsgId, NewTimestamp}, NewClientList),
-                io:fwrite("Clientliste mit aktualisiertem Client ~p: ~p\n", [ClientId, NewClientList]),
+                %io:fwrite("Clientliste mit aktualisiertem Client ~p: ~p\n", [ClientId, NewClientList]),
                 ServerPID ! {Message, NewMsgId, Terminated}
 	end,
 			 
@@ -66,31 +66,31 @@ getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID) ->
 %% -------------------------------------------
 %% prüft ob sich in der Clientliste Clients aufhalten die länger als Lifetime nichts gesendet haben
 %% erstellt rekursiv eine Liste die nur die aktuellen Clients enthält und gibt diese zurück
-updateClientList(ClientList, ClientLifetime) -> io:fwrite("CLIENTLIST vorm update: ~p",[ClientList]), 
-        updateClientList(ClientList, ClientLifetime, []).
+updateClientList(ClientList, ClientLifetime) -> 
+        %io:fwrite("CLIENTLIST vorm update: ~p",[ClientList]), 
+        updateClientList(ClientList, ClientLifetime, orddict:new()).
 
 % ------
 updateClientList([],_,List) -> 
-        io:fwrite("CLIENTLIST ist leer, neue LISTE: ~p\n", [List]),
-        List;
+        %io:fwrite("CLIENTLIST ist leer, neue LISTE: ~p\n", [List]),
+        orddict:new();
 
 updateClientList([{CurrentClientId, Value}], ClientLifetime, List) ->
-        io:fwrite("CLIENTLIST hat nur einen Eintrag: ~p, ~p",[CurrentClientId, Value]),
+        %io:fwrite("CLIENTLIST hat nur einen Eintrag: ~p, ~p",[CurrentClientId, Value]),
 		{LastMsgId, Timestamp} = Value,
         Lifetime = currentTimeInSec()-Timestamp,
 	case (Lifetime > ClientLifetime) of
 		true -> NewList = List;
 		false -> NewList = orddict:store(CurrentClientId, {LastMsgId, Timestamp}, List)
 	end, 
-	updateClientList([], ClientLifetime, NewList);
+	updateClientList(orddict:new(), ClientLifetime, NewList);
 	    
 updateClientList(ClientList, ClientLifetime, List) ->
-        [{CurrentClientId, Value},_] = ClientList,
-        {LastMsgId, Timestamp} = Value,
-	Lifetime = currentTimeInSec()-Timestamp,
+        [{CurrentClientId, {LastMsgId,TimeStamp}},_] = ClientList,
+	Lifetime = currentTimeInSec()-TimeStamp,
 	case (Lifetime > ClientLifetime) of
 		true -> NewList = List;
-		false -> NewList = orddict:store(CurrentClientId, {LastMsgId, Timestamp}, List)
+		false -> NewList = orddict:store(CurrentClientId, {LastMsgId, TimeStamp}, List)
 	end,
         Tail = orddict:erase(CurrentClientId,ClientList), 
 	updateClientList(Tail, ClientLifetime, NewList)
@@ -99,9 +99,8 @@ updateClientList(ClientList, ClientLifetime, List) ->
 %% -------------------------------------------
 %% fügt einen Client mit einem aktuellen Zeitstempel in die Clientliste ein
 addClient(ClientId, LastMsgId, ClientList) ->
-	io:fwrite("Client mit ClientID ~p, LastMsgId ~p und Timestamp ~p soll zur Clientliste hinzugefügt werden\n", [ClientId, LastMsgId, timeMilliSecond()]),
+	logging("server.log",lists:concat(["Neuer Client in Client Liste: ", pid_to_list(ClientId),"\n"])), 
 	NewClients = orddict:store(ClientId, {LastMsgId, currentTimeInSec()}, ClientList),
-        io:fwrite("Clientliste: ~p\n", [NewClients]),
 	NewClients
 .	
 

@@ -57,6 +57,7 @@ loop(CManager,QManager,MessageNumber) ->
             QManager ! {dropmessage, {Nachricht, Nr}},
         
             loop(CManager, QManager, MessageNumber);
+        
         exit -> 
             logging("server.log",lists:concat(["Server Received Exit Signal and is Shuting down\n"])),
             exit("Serverlifetime is over")

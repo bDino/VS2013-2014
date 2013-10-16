@@ -49,8 +49,8 @@ start() ->
 
 spawnAllClients(ClientNumber,Server,NumberList,FirstTimeout,ClientLifetime,SendeIntervall) when (ClientNumber > 1) ->
     ClientLog = lists:concat(["Client ",ClientNumber,".log"]),
-    spawn(fun() -> startEditor(ClientLog,ClientNumber,Server,0,NumberList,FirstTimeout,SendeIntervall) end),
-    %timer:kill_after(ClientLifetime * 1000,ClientPID),
+    ClientPID = spawn(fun() -> startEditor(ClientLog,ClientNumber,Server,0,NumberList,FirstTimeout,SendeIntervall) end),
+    timer:kill_after(ClientLifetime * 1000,ClientPID),
     spawnAllClients(ClientNumber - 1,Server,NumberList,FirstTimeout,ClientLifetime,SendeIntervall);
  
 spawnAllClients(1,Server,NumberList,FirstTimeout,ClientLifetime,SendeIntervall) ->
@@ -76,16 +76,18 @@ startEditor(ClientLog,ClientNumber,Server,SentMsg,NumberList,FirstTimeout,SendeI
                             logging(ClientLog,lists:concat(["Started Reader Mod at: ",timeMilliSecond(),"\n"])),
                             startReader(0,Server,NumberList,ClientLog,FirstTimeout,ClientNumber,SendeIntervall);
                         false ->
-                            Message = lists:concat(["Client: ",pid_to_list(self())," Nachricht :", Number ,"te Nachricht C out: ",timeMilliSecond(), "\n"]),
-                            logging(ClientLog,Message),
+                            Message = lists:concat(["Client: ",pid_to_list(self())," Nachricht :", Number ,"te Nachricht C out: ",timeMilliSecond()]),
+                            logging(ClientLog,lists:concat([Message,"\n"])),
                             Server ! {dropmessage, {Message, Number}},
                             startEditor(ClientLog,ClientNumber,Server,SentMsg + 1,NewList,FirstTimeout,SendeIntervall)
                     end;
     
+            EXIT -> logging(ClientLog,lists:concat(["Client got EXIT Signal and is shutting down\n"]));
+            
             Any -> logging(ClientLog,"Failed to retrieve next message number!\n"),
-                startEditor(ClientLog,ClientNumber,Server,SentMsg + 1,NumberList,FirstTimeout,SendeIntervall);
+                startEditor(ClientLog,ClientNumber,Server,SentMsg + 1,NumberList,FirstTimeout,SendeIntervall)
         
-            Exit -> logging(ClientLog,lists:concat(["Client :",pid_to_list(self())," got EXIT Signal and is shutting down\n"]))
+            
         end
 .
 
@@ -95,7 +97,6 @@ startReader(NumberOfMessages,Server,NumberList,ClientLog,FirstTimeout,ClientNumb
     
     receive
         {reply,Number,Nachricht,Terminated} ->
-        io:format("CLIENT Reader RECEIVE\n"),
             case (lists:member(Number,NumberList)) of 
                 true -> logging(ClientLog,lists:concat([to_String(Nachricht),"******* C in: ",timeMilliSecond(),"\n"]));
                 false -> logging(ClientLog,lists:concat([to_String(Nachricht)," C in: ",timeMilliSecond(),"\n"]))
