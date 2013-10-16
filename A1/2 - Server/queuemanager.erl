@@ -51,6 +51,7 @@ loop(HBQ,DLQ, DLQCapacity) ->
         %% die sich als nächstes in der DLQ befindet   
         {getmessagesbynumber, LastMsgId, ClientManagerId} ->
                 
+                io:fwrite("QUEUEMANAGER im getmessagesbynumber: ~p\n", [LastMsgId]),
        		LastNumber = maxNrSL(DLQ), 
        		io:fwrite("QUEUEMANAGER LastNumber ~p  -   LastMsgId ~p\n",[LastNumber,LastMsgId]),
        		
@@ -69,8 +70,9 @@ loop(HBQ,DLQ, DLQCapacity) ->
                             io:fwrite("NICHTLEERE DUMMY NACHRICHT ERSTELLT\n"),
                             Terminated = true,
                             NextMsgNr = LastMsgId
-            end,
-        	ClientManagerId ! {Message, NextMsgNr, Terminated}
+                end,
+        	ClientManagerId ! {Message, NextMsgNr, Terminated},
+                loop(HBQ, DLQ, DLQCapacity)
     end
 .	 
 

@@ -34,7 +34,7 @@ start() ->
                 
                 case ServerPID == undefined of
                 
-                    true -> io:format("The PID For the Server ~p could not be retrieved!",[Name]);
+                    true -> io:format("The PID For the Server ~p could not be retrieved!\n",[Name]);
                     false -> io:format("A connection to the server with PID ~p and Name ~p could be established :). \n", [ServerPID, Name]),
                 
                             % Start the number of clients specified in the config file.
@@ -76,7 +76,7 @@ startEditor(ClientLog,ClientNumber,Server,SentMsg,NumberList,FirstTimeout,SendeI
                             logging(ClientLog,lists:concat(["Started Reader Mod at: ",timeMilliSecond(),"\n"])),
                             startReader(0,Server,NumberList,ClientLog,FirstTimeout,ClientNumber,SendeIntervall);
                         false ->
-                            Message = lists:concat(["Client: ",pid_to_list(self())," Nachricht :", Number ,"te Nachricht C out: ",timeMilliSecond()]),
+                            Message = lists:concat(["Client: ",pid_to_list(self())," Nachricht :", Number ,"te Nachricht C out: ",timeMilliSecond(), "\n"]),
                             logging(ClientLog,Message),
                             Server ! {dropmessage, {Message, Number}},
                             startEditor(ClientLog,ClientNumber,Server,SentMsg + 1,NewList,FirstTimeout,SendeIntervall)

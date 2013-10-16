@@ -48,14 +48,16 @@ getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID) ->
 		end,
 	
 	NewClientList = addClient(ClientId, LastMsgId, ClientList),
+        io:fwrite("QUEUEMANAGER wird aufgefordert die Message zur letzten Nummer: ~p auszugeben \n", [LastMsgId]),
 	QueueManagerPID ! {getmessagesbynumber, LastMsgId, self()},
 	
 	receive
 		{Message, NewMsgId, Terminated} ->
                 io:format("CMANAGER RECEIVED MSG ~p: ~p\n und TERMINATED IS ~p\n",[NewMsgId, Message, Terminated]),
-		    {MsgId, NewTimestamp} = orddict:fetch(ClientId, NewClientList),
-			ClientListWithNewMsgId = orddict:store(ClientId, {NewMsgId, NewTimestamp}, NewClientList),
-                       ServerPID ! {Message, NewMsgId, Terminated}
+                {MsgId, NewTimestamp} = orddict:fetch(ClientId, NewClientList),
+                ClientListWithNewMsgId = orddict:store(ClientId, {NewMsgId, NewTimestamp}, NewClientList),
+                io:fwrite("Clientliste mit aktualisiertem Client ~p: ~p\n", [ClientId, NewClientList]),
+                ServerPID ! {Message, NewMsgId, Terminated}
 	end,
 			 
 	loop(ClientListWithNewMsgId, ClientLifetime, QueueManagerPID)
@@ -69,7 +71,7 @@ updateClientList(ClientList, ClientLifetime) -> io:fwrite("CLIENTLIST vorm updat
 
 % ------
 updateClientList([],_,List) -> 
-        io:fwrite("CLIENTLIST ist leer und muss nicht geupdated werde\n"),
+        io:fwrite("CLIENTLIST ist leer, neue LISTE: ~p\n", [List]),
         List;
 
 updateClientList([{CurrentClientId, Value}], ClientLifetime, List) ->
