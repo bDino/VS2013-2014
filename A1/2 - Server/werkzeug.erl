@@ -195,15 +195,20 @@ findSL([{ElemNr, _Elem}|_TSL],SNr) when ElemNr < SNr -> {-1,nok}.
 % gibt ggf das naechst groessere Element zurueck
 %
 % erfolgreicher Fall
-findneSL([{SNr, Elem}|_TSL],SNr) -> {SNr, Elem};
+findneSL([{SNr, Elem}|_TSL],SNr) -> %io:fwrite("1"),
+                                    {SNr, Elem};
 % Element nicht vorhanden: es wird das naechst groessere Element genommen
-findneSL([{ElemNr2, Elem2},{ElemNr1, _Elem1}|_TSL],SNr) when (ElemNr2 > SNr) and (SNr > ElemNr1) -> {ElemNr2, Elem2};
+findneSL([{ElemNr2, Elem2},{ElemNr1, _Elem1}|_TSL],SNr) when (ElemNr2 > SNr) and (SNr > ElemNr1) -> %io:fwrite("2"),
+                                                                                                    {ElemNr2, Elem2};
 % rekursive Suche
-findneSL([{ElemNr, _Elem}|TSL],SNr) when ElemNr > SNr -> findneSL(TSL,SNr);
+findneSL([{ElemNr, _Elem}|TSL],SNr) when ElemNr > SNr ->    %io:fwrite("3"),
+                                                            findneSL(TSL,SNr);
 % Element nicht vorhanden und es gibt kein groesseres Element: Fehlercode
-findneSL([{ElemNr, _Elem}|_TSL],SNr) when SNr > ElemNr -> {-1,nok};
+findneSL([{ElemNr, _Elem}|_TSL],SNr) when SNr > ElemNr ->   %io:fwrite("4"),
+                                                            {-1,nok};
 % bei leeren Liste: Fehlercode
-findneSL([],_SNr) -> {-1,nok}.
+findneSL([],_SNr) ->    %io:fwrite("5"),
+                        {-1,leer}.
 
 %%Laenge der Liste
 %

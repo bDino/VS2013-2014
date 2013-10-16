@@ -60,8 +60,17 @@ loop(HBQ,DLQ, DLQCapacity) ->
                             MsgNr = LastMsgId + 1,
                             %% Fehlercode wenn DLQ leer -> nicht möglich, da Abfrage zuvor
                             %% Fehlercode wenn Element nicht vorhanden und auch kein größeres -> nicht möglich, da LastMsgId < LastNumber
-                            {NextMsgNr, Message} = findneSL(DLQ,MsgNr),
-                                case (NextMsgNr == LastNumber) of 
+                            io:fwrite("DLQ: ~p\n",[DLQ]),
+                            %%Abfrage ob Element Nr kleiner ist als kleinstes Element, sonst sagt findneSL dass Liste leer ist...
+                            FirstNumber = minNrSL(DLQ),
+                            case MsgNr < FirstNumber of
+                                true ->         NextMsgNr = FirstNumber;
+                                false ->        NextMsgNr = MsgNr
+                            end,
+                
+                            {NewMsgNr, Message} = findneSL(DLQ,NextMsgNr),
+                            io:fwrite("NEXTELEMENT bei suche nach nächsten Element von MSGNR ~p: ~p\n",[MsgNr, {NextMsgNr, Message}]),
+                                case (NewMsgNr == LastNumber) of 
                                         true -> Terminated = true;
                                         false -> Terminated = false
                                 end;
@@ -69,9 +78,9 @@ loop(HBQ,DLQ, DLQCapacity) ->
                             Message = "Nichtleere Dummy Nachricht",
                             io:fwrite("NICHTLEERE DUMMY NACHRICHT ERSTELLT\n"),
                             Terminated = true,
-                            NextMsgNr = LastMsgId
+                            NewMsgNr = LastMsgId
                 end,
-        	ClientManagerId ! {Message, NextMsgNr, Terminated},
+        	ClientManagerId ! {Message, NewMsgNr, Terminated},
                 loop(HBQ, DLQ, DLQCapacity)
     end
 .	 
