@@ -63,17 +63,17 @@ startEditor(ClientLog,ClientNumber,Server,SentMsg,NumberList,FirstTimeout,SendeI
         receive
             {nnr, Number} -> 
             
-                logging(ClientLog, lists:concat(["Received next Message Number: ",Number,"\n"])),
+                logging(ClientLog, lists:concat(["Client: ",pid_to_list(self()),"Received next Message Number: ",Number,"\n"])),
                 NewList = [Number|NumberList],
         
                     case (SentMsg == SendeIntervall) of 
                         true ->
-                            logging(ClientLog,lists:concat(["Forgott to send Message Number: ",Number,"\n"])),
+                            logging(ClientLog,lists:concat(["Client: ",pid_to_list(self()),"Forgott to send Message Number: ",Number,"\n"])),
                             SleepTime = 2000 + random:uniform(3000),
-                            logging(ClientLog,lists:concat(["Set Client to Sleep: ",SleepTime,"\n"])),
+                            logging(ClientLog,lists:concat(["Client: ",pid_to_list(self()),"Set Client to Sleep: ",SleepTime,"\n"])),
                             timer:sleep(SleepTime),
                             
-                            logging(ClientLog,lists:concat(["Started Reader Mod at: ",timeMilliSecond(),"\n"])),
+                            logging(ClientLog,lists:concat(["Client: ",pid_to_list(self()),"Started Reader Mod at: ",timeMilliSecond(),"\n"])),
                             startReader(0,Server,NumberList,ClientLog,FirstTimeout,ClientNumber,SendeIntervall);
                         false ->
                             Message = lists:concat(["Client: ",pid_to_list(self())," Nachricht :", Number ,"te Nachricht C out: ",timeMilliSecond()]),
@@ -82,7 +82,7 @@ startEditor(ClientLog,ClientNumber,Server,SentMsg,NumberList,FirstTimeout,SendeI
                             startEditor(ClientLog,ClientNumber,Server,SentMsg + 1,NewList,FirstTimeout,SendeIntervall)
                     end;
     
-            {exit} -> logging(ClientLog,"Client got EXIT Signal and is shutting down\n"),
+            {exit} -> logging(ClientLog,lists:concat(["Client: ",pid_to_list(self())," got EXIT Signal and is shutting down\n"])),
                     exit("Shutting down...")
             
         end
@@ -105,7 +105,7 @@ startReader(NumberOfMessages,Server,NumberList,ClientLog,FirstTimeout,ClientNumb
                 false -> startEditor(ClientLog,ClientNumber,Server,0,NumberList,FirstTimeout,SendeIntervall)
             end;
         
-        {exit} -> logging(ClientLog,"Client got EXIT Signal and is shutting down\n"),
+        {exit} -> logging(ClientLog,lists:concat(["Client: ",pid_to_list(self())," got EXIT Signal and is shutting down\n"])),
                     exit("Shutting down...")
     end
 .
