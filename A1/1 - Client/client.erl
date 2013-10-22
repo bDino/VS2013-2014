@@ -55,7 +55,7 @@ spawnAllClients(ClientNumber,Server,NumberList,FirstTimeout,ClientLifetime,Sende
  
 spawnAllClients(1,Server,NumberList,FirstTimeout,ClientLifetime,SendeIntervall) ->
     ClientPID = spawn(fun() -> startEditor("Client 1.log",1,Server,0,NumberList,FirstTimeout,SendeIntervall) end),
-    timer:kill_after(ClientLifetime * 1000,ClientPID)   
+    timer:send_after(ClientLifetime * 1000,ClientPID,{exit})   
 .
 
 startEditor(ClientLog,ClientNumber,Server,SentMsg,NumberList,FirstTimeout,SendeIntervall) ->
@@ -82,7 +82,7 @@ startEditor(ClientLog,ClientNumber,Server,SentMsg,NumberList,FirstTimeout,SendeI
                             startEditor(ClientLog,ClientNumber,Server,SentMsg + 1,NewList,FirstTimeout,SendeIntervall)
                     end;
     
-            {'EXIT',ExecutorPID,_} -> logging(ClientLog,"Client got EXIT Signal and is shutting down\n"),
+            {exit} -> logging(ClientLog,"Client got EXIT Signal and is shutting down\n"),
                     exit("Shutting down...")
             
         end
