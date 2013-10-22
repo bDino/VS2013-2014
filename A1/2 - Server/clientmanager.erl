@@ -34,6 +34,7 @@ loop(ClientList, ClientLifetime, QueueManagerPID) ->
                     getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID);
             
             {client_timeout, ClientId} ->
+                    io:fwrite("Client ~p wird aus Clientliste entfernt\n", [ClientId]),
                     NewClientlist = orddict:erase(ClientId, ClientList),
                     loop(NewClientlist, ClientLifetime, QueueManagerPID)
 	end  
@@ -48,9 +49,9 @@ getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID) ->
 		true ->
                         io:fwrite("Client ~p ist in Clientliste\n", [ClientId]),
 			{LastMsgid, TRef} = orddict:fetch(ClientId, ClientList),
-                        {Succes, Reason} = cancel{TRef},
+                        {Succes, _} = timer:cancel(TRef),
                         case Succes == error of
-                            true ->     io:fwrite("Timer für Client ~p war nicht mehr aktiv!!\n",[Clientid]),
+                            true ->     io:fwrite("Timer für Client ~p war nicht mehr aktiv!!\n",[ClientId]),
                                         LastMsgId = -1;
                             false ->    LastMsgId = LastMsgid
                         end;
@@ -59,7 +60,7 @@ getmessages(ClientId, ClientList, ClientLifetime, QueueManagerPID, ServerPID) ->
 			LastMsgId = -1
 		end,
 	
-	{ok, TimerRef} = timer:send_after(Clientlifetime, {client_timeout, ClientId}),
+	{ok, TimerRef} = timer:send_after(ClientLifetime, {client_timeout, ClientId}),
 	NewClientList = orddict:store(ClientId, {LastMsgId, TimerRef}, ClientList),
         %io:fwrite("QUEUEMANAGER wird aufgefordert die Message zur letzten Nummer: ~p auszugeben \n", [LastMsgId]),
 	QueueManagerPID ! {getmessagesbynumber, LastMsgId, self()},

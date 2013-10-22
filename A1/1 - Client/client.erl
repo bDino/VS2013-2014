@@ -103,6 +103,9 @@ startReader(NumberOfMessages,Server,NumberList,ClientLog,FirstTimeout,ClientNumb
             case (Terminated == false) of
                 true -> startReader(NumberOfMessages,Server,NumberList,ClientLog,FirstTimeout,ClientNumber,SendeIntervall);
                 false -> startEditor(ClientLog,ClientNumber,Server,0,NumberList,FirstTimeout,SendeIntervall)
-            end
+            end;
+        
+        {exit} -> logging(ClientLog,"Client got EXIT Signal and is shutting down\n"),
+                    exit("Shutting down...")
     end
 .

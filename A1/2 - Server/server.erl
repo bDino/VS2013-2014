@@ -21,8 +21,8 @@ start() ->
     %Configuration fertig
 
     %Serverkomponenten initialisieren
-    QueuemanagerPID = spawn(fun() -> queuemanager:start(DlqLimit) end),
-    ClientmanagerPID = spawn(fun() -> clientmanager:start(Clientlifetime,QueuemanagerPID) end),
+    QueuemanagerPID = spawn_link(fun() -> queuemanager:start(DlqLimit) end),
+    ClientmanagerPID = spawn_link(fun() -> clientmanager:start(Clientlifetime,QueuemanagerPID) end),
     
     ServerPID = spawn(fun() -> loop(self(),Lifetime,ClientmanagerPID,QueuemanagerPID,0) end),
     
