@@ -50,7 +50,7 @@ start() ->
 spawnAllClients(ClientNumber,Server,NumberList,FirstTimeout,ClientLifetime,SendeIntervall) when (ClientNumber > 1) ->
     ClientLog = lists:concat(["Client ",ClientNumber,".log"]),
     ClientPID = spawn(fun() -> startEditor(ClientLog,ClientNumber,Server,0,NumberList,FirstTimeout,SendeIntervall) end),
-    timer:kill_after(ClientLifetime * 1000,ClientPID),
+    timer:send_after(ClientLifetime * 1000,ClientPID,{exit}) ,
     spawnAllClients(ClientNumber - 1,Server,NumberList,FirstTimeout,ClientLifetime,SendeIntervall);
  
 spawnAllClients(1,Server,NumberList,FirstTimeout,ClientLifetime,SendeIntervall) ->
