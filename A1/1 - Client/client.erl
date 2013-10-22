@@ -82,11 +82,8 @@ startEditor(ClientLog,ClientNumber,Server,SentMsg,NumberList,FirstTimeout,SendeI
                             startEditor(ClientLog,ClientNumber,Server,SentMsg + 1,NewList,FirstTimeout,SendeIntervall)
                     end;
     
-            EXIT -> logging(ClientLog,lists:concat(["Client got EXIT Signal and is shutting down\n"]));
-            
-            Any -> logging(ClientLog,"Failed to retrieve next message number!\n"),
-                startEditor(ClientLog,ClientNumber,Server,SentMsg + 1,NumberList,FirstTimeout,SendeIntervall)
-        
+            {'EXIT',ExecutorPID,_} -> logging(ClientLog,"Client got EXIT Signal and is shutting down\n"),
+                    exit("Shutting down...")
             
         end
 .
