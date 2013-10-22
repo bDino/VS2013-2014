@@ -5,3 +5,4 @@ deps
 *.plt
 .DS_Store
 *.log
+*.cfg
