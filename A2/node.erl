@@ -39,14 +39,15 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName) ->
             {connect, Level, Edge} ->
                 loop(NodeName, Level, State);
             
-            {initiate, Level, FragName, NodeState, Edge} ->
+            {initiate, Level, FragName, State, Edge} ->
                 {Weight, Neighbour, EdgeState} = edges:searcgAKmG(EdgeList),
                 Neighbour ! {Test, NodeLevel, ThisFragName, {Weight, NodeName, Neighbour}},
         
                 receive
                     {accept, Edge} ->
-                        
+                        %changeEdgeState for Edge to Branch!
                     {reject, Edge} ->
+                        %changeEdgeState for Edge to Rejected!
                 end;
         
                 loop(NodeName, Level, State);
@@ -55,18 +56,25 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName) ->
                 {Weight, Neighbour, _self} = Edge,
                 ThisEdge = {Weight, NodeName, Neighbour},
                 case FragName == ThisFragName of
-                    true ->    
+                    true ->  
+                        %changeEdgeState for Edge: ThisEdge to Rejected!
                         Neighbour ! {reject, ThisEdge};
                     false ->    
                         case NodeLevel >= Level of
                             true ->     Neighbour ! {accept, ThisEdge};
                             false ->    %%Warten bis NodeLevel sich verändert hat
+                        end
+                end,
+                loop(NodeName
                 
         
             {report, Weight, Edge} ->
+            %% getBranches and send report over Branch-Edges
+            %% if Branch == Core 
                 loop(NodeName, Level, State);
         
             {changeroot, Edge} ->
+            %% sende Changeroot weiter nach außen(an alle außer an die von denen es herkommt???)
                 loop(NodeName, Level, State)
         end
     
