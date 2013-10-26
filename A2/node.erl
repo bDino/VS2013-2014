@@ -43,6 +43,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName) ->
                         NewEdgeList = changeEdgeState(EdgeList, Edge, branch),
                         Neighbour ! {initiate, NodeLevel, ThisFragName, NodeState, {Weight, NodeName, Neighbour};
                     false ->
+                        NewEdgeList = EdgeList,
                         case (getEdgeState(EdgeList, Edge)==basic) of
                             true ->
                                 %%gar nichts
@@ -55,7 +56,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName) ->
                     end
                 
             
-                loop(NodeName, NodeLevel, NodeState, EdgeListe, ThisFragName);
+                loop(NodeName, NodeLevel, NodeState, NewEdgeListe, ThisFragName);
             
             
             {initiate, Level, FragName, State, Edge} ->
@@ -194,10 +195,51 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName) ->
 
 
 searchAKmG(EdgeList) ->
-
-    %findNeSL muss umgebaut werden und die Kante mit dem kleinsten Gewicht und dem Status basic ausgeben
-    Edge = findNeSL(EdgeList),
-    Edge
-
+    {Edge|Tail} = EdgeList,
+    case getEdgeState(Edge) == basic of
+        true ->
+            searchAKmG(Tail, Edge);
+        false ->
+            searchAKmG(Tail)
+    end
 .
+
+searchAKmG([]) ->
+    %%Fehlernachricht!!!!!!
+    %%keine neue Basic Edge in der Liste
+.
+
+searchAKmG(List, Edge) ->
+    {Edge2|Tail} = List,
+    case getEdgeState(Edge2) == basic of
+        true ->
+            {Weight1, _, _} = Edge,
+            {Weight2, _, _} = Edge2,
+            case (Weight2<Weight1) of
+                true -> searchAKmG(Tail, Edge2);
+                false -> seachAKmG(Tail, Edge)
+            end
+        false ->
+            searchAKmG(Tail, Edge)
+    end
+.
+
+searchAKmG([], Edge) ->
+    Edge
+.
+
+
+getEdgeState(EdgeList, Edge) ->
+    {Weight, Neighbour, _self} = Edge,
+    EdgeWithState = orddict:fetch(Neighbour, Edge),
+    {_weight,_neighbour, _self, State} = EdgeWithState,
+    State
+.
+
+
+
+
+
+
+
     
