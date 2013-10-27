@@ -33,7 +33,7 @@ start(NodeName) ->
 .
 
 
-loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName) ->
+loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge, BestWeight, TestNode, FindCount) ->
     
         receive
             {connect, Level, Edge} ->
@@ -56,7 +56,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName) ->
                     end
                 
             
-                loop(NodeName, NodeLevel, NodeState, NewEdgeListe, ThisFragName);
+                loop(NodeName, NodeLevel, NodeState, NewEdgeListe, ThisFragName, InBranch, BestEdge, BestWeight, TestNode, FindCount);
             
             
             {initiate, Level, FragName, State, Edge} ->
@@ -64,7 +64,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName) ->
                 NewFragName = FragName,
                 NewNodeState = State,
                 {Weight, Neighbour, _self} = Edge,
-                InBranch = Neighbour,
+                NewInBranch = Neighbour,
                 %%einkommende Kante speichern (Edge)
                 sendInitiate(EdgeList, Edge),
                 %%wenn State=find dann find-count raufsetzen
@@ -74,7 +74,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName) ->
                         test_procedure(EdgeList)
                 end,
         
-                loop(NodeName, NewNodeLevel, NewNodeState, EdgeList, NewFragName);
+                loop(NodeName, NewNodeLevel, NewNodeState, EdgeList, NewFragName, NewInBranch, BestEdge, BestWeight, TestNode, FindCount);
         
             
            
@@ -99,10 +99,10 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName) ->
                         NewEdgeList = EdgeList,
                         case NodeLevel >= Level of
                             true ->     Neighbour ! {accept, ThisEdge};
-                            false ->    %%Warten bis NodeLevel sich verändert hat
+                            false ->    NodeName ! {test, Level, FragName, Edge}
                         end
                 end,
-                loop(NodeName, NodeLevel, NodeState, NewEdgeList, ThisFragName);
+                loop(NodeName, NodeLevel, NodeState, NewEdgeList, ThisFragName, InBranch, BestEdge, BestWeight, TestNode, FindCount);
                 
         
             %%---------------------------------------------------------------------------
@@ -112,11 +112,11 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName) ->
                 {Weight, Neighbour, _self} = Edge,
                 case (Weight < BestWeight) of
                     true -> 
-                        NewBestNode = Neighbour,
+                        NewBestEdge = {Weight, Neighbour, NodeName},
                         NewBestWeight = Weight;
                        
                     false ->
-                        NewBestNode = BestNode,
+                        NewBestEdge = BestEdge,
                         NewBestWeight = BestWeight
                 end,
                 case (FindCount == 0) of       
@@ -127,7 +127,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName) ->
                         NewNodeState = NodeState
                     end,
             
-                loop(NodeName, NodeLevel, NewNodeState, EdgeList, ThisFragName);
+                loop(NodeName, NodeLevel, NewNodeState, EdgeList, ThisFragName, InBranch, NewBestEdge, NewBestWeight, NewTestNode, FindCount);
             
                         
                     
@@ -135,17 +135,18 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName) ->
             %% getBranches and send report over Branch-Edges
             %% if Branch == Core 
                 {Weight, Neighbour, _self} = Edge,
-                case InBranch = Edge of
+                case InBranch == Edge of
                     true ->
                         case NodeState == find of
                             true ->
                                 NewEdgeList = EdgeList,
-                                %%warten;
+                                %%warten!!!??????????????????????????????????????????????
+                                NodeName ! {report, Weight, Edge};
                             false ->
                                 case Weight>BestWeight of
                                     true -> 
                                         %%changeroot procedure
-                                        case (getEdgeState(BestNode) == branch) of
+                                        case getEdgeState(BestNode) == branch of
                                             {BNWeight, BestNodeNeighbour, _self} = BestNode,
                                             true ->
                                                 NewEdgeList = EdgeList,
@@ -156,13 +157,18 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName) ->
                                         end;
                                     false -> 
                                         NewEdgeList = EdgeList,
-                                        case (Weight == BestWeight == ) of
+                                        %nur wenn weight = INFINITY ist
+                                        case Weight == BestWeight of
                                             true ->
                                                 exit
                                                 %%Algo ist fertig!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!            EXIT EXIT EXIT EXIT
                                         end
                                 end 
-                        end;
+                        end,
+                        NewFindCount = FindCount,
+                        NewBestWeight = BestWeight,
+                        NewBestEdge = BestEdge,
+                        NewNodeState = NodeState;
             
                     false ->
                         NewEdgeList = EdgeList,
@@ -170,10 +176,10 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName) ->
                         case Weight<BestWeight of
                             true ->
                                 NewBestWeight = Weight,
-                                NewBestNode = Neighbour;
+                                NewBestEdge = {Weight, Neighbour, Nodename};
                             false ->
                                 NewBestWeight = BestWeight,
-                                NewBestNode = BestNode
+                                NewBestEdge = BestEdge
                         end,
                         case FindCount == 0 andalso TestNode == nil of
                             true ->
@@ -184,11 +190,12 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName) ->
                                 NewNodeState = NodeState
                         end
                 end,
-                loop(NodeName, NodeLevel, NewNodeState, NewEdgeList, ThisFragName);
+                loop(NodeName, NodeLevel, NewNodeState, NewEdgeList, ThisFragName, InBranch, NewBestEdge, NewBestWeight, TestNode, NewFindCount);
         
+            
             {changeroot, Edge} ->
             %% sende Changeroot weiter nach außen(an alle außer an die von denen es herkommt???)
-                loop(NodeName, Level, State)
+                loop(NodeName, Level, State, InBranch, BestEdge, BestWeight, TestNode, FindCount)
         end
     
 .
@@ -237,7 +244,9 @@ getEdgeState(EdgeList, Edge) ->
 .
 
 
+test_procedure(EdgeList) ->
 
+.
 
 
 
