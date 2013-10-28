@@ -53,8 +53,8 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                     false ->
                         NewEdgeList = EdgeList,
                         case (getEdgeState(EdgeList, Edge)==basic) of
-                            %true ->
-                                %%gar nichts
+                            true ->
+                                NodeName ! {connect, Level, Edge};
                             false ->
                                 Neighbour ! {initiate, NodeLevel+1, Weight, find, {Weight, NodeName, Neighbour}}
                                 %%nicht sicher über die nächsten Schritte
