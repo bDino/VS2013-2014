@@ -1,6 +1,6 @@
 -module(node).
 -author("Milena Dreier, Dino Buskulic").
--export([start/0]).
+-export([start/1]).
 -import(werkzeug,[get_config_value/2,logging/2,logstop/0,timeMilliSecond/0]).
 
 
@@ -14,21 +14,24 @@
 %
 start(NodeName) ->
     
-    EdgeList = edges:start(),
+    EdgeList = [],
 
     %ServerPID = spawn(fun() -> loop(self(),Lifetime,ClientmanagerPID,QueuemanagerPID,0) end),
     
     global:register_name(NodeName,self()),
     %logging("server.log","...Server started and registered with Servername ...\n"),
     
-    {Weight, Neighbour, EdgeState} = edges:searchAKmG(EdgeList),
+    Edge = searchAKmG(EdgeList),
+    {Weight, Neighbour, _EdgeState} = Edge,
+    NewEdgeList = changeEdgeState(EdgeList, Edge, branch),
     Level = 0,
-    NewEdgeState = branch,
-    Edge = {Weight, NodeName, Neighbour, NewEdgeState},
-    Neighbour ! {connect, Level, Edge},
+    FindCount = 0,
+    Neighbour ! {connect, Level, {Weight, NodeName, Neighbour}},
     State = found,
+    InBranch = nil, BestEdge = nil, BestWeight = nil, TestNode = nil,
+    ThisFragName = nil,
     
-    loop(NodeName, Level, State, EdgeList),
+    loop(NodeName, Level, State, NewEdgeList, ThisFragName, InBranch, BestEdge, BestWeight, TestNode, FindCount),
     self()
 .
 
@@ -41,32 +44,33 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                 case NodeLevel>Level of
                     true -> 
                         NewEdgeList = changeEdgeState(EdgeList, Edge, branch),
-                        Neighbour ! {initiate, NodeLevel, ThisFragName, NodeState, {Weight, NodeName, Neighbour};
+                        Neighbour ! {initiate, NodeLevel, ThisFragName, NodeState, {Weight, NodeName, Neighbour}};
                     false ->
                         NewEdgeList = EdgeList,
                         case (getEdgeState(EdgeList, Edge)==basic) of
-                            true ->
+                            %true ->
                                 %%gar nichts
                             false ->
-                                Neighbour ! {initiate, NodeLevel+1, Weight, find, {Weight, NodeName, Neighbour}
+                                Neighbour ! {initiate, NodeLevel+1, Weight, find, {Weight, NodeName, Neighbour}}
                                 %%nicht sicher über die nächsten Schritte
                                 %NewNodeLevel = NodeLevel+1,
                                 %NewFragName = Weight;
                         end
-                    end
+                    end,
                 
             
-                loop(NodeName, NodeLevel, NodeState, NewEdgeListe, ThisFragName, InBranch, BestEdge, BestWeight, TestNode, FindCount);
+                loop(NodeName, NodeLevel, NodeState, NewEdgeList, ThisFragName, InBranch, BestEdge, BestWeight, TestNode, FindCount);
             
             
             {initiate, Level, FragName, State, Edge} ->
                 NewNodeLevel = Level,
                 NewFragName = FragName,
                 NewNodeState = State,
-                {Weight, Neighbour, _self} = Edge,
+                {_weight, EdgeNeighbour, _self} = Edge,
                 NewInBranch = Neighbour,
-                %%einkommende Kante speichern (Edge)
-                sendInitiate(EdgeList, Edge),
+                BestWeight = INFINITY,
+                NewFindCount = sendInitiate(EdgeList, Edge, Level, FragName, State, NodeName},
+                
                 %%wenn State=find dann find-count raufsetzen
                 
                 case State == find of
@@ -74,7 +78,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                         test_procedure(EdgeList)
                 end,
         
-                loop(NodeName, NewNodeLevel, NewNodeState, EdgeList, NewFragName, NewInBranch, BestEdge, BestWeight, TestNode, FindCount);
+                loop(NodeName, NewNodeLevel, NewNodeState, EdgeList, NewFragName, NewInBranch, BestEdge, BestWeight, TestNode, NewFindCount);
         
             
            
@@ -135,7 +139,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
             %% getBranches and send report over Branch-Edges
             %% if Branch == Core 
                 {Weight, Neighbour, _self} = Edge,
-                case InBranch == Edge of
+                case InBranch == Neighbour of
                     true ->
                         case NodeState == find of
                             true ->
@@ -146,14 +150,14 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                                 case Weight>BestWeight of
                                     true -> 
                                         %%changeroot procedure
-                                        case getEdgeState(BestNode) == branch of
-                                            {BNWeight, BestNodeNeighbour, _self} = BestNode,
+                                        {BNWeight, BestEdgeNeighbour, _self} = BestEdge,
+                                        case getEdgeState(BestEdge) == branch of
                                             true ->
                                                 NewEdgeList = EdgeList,
-                                                BestNodeNeighbour ! {changeroot, {BNWeight, NodeName, BestNodeNeighbour}};
+                                                BestEdgeNeighbour ! {changeroot, {BNWeight, NodeName, BestNodeNeighbour}};
                                             false ->
-                                                BestNodeNeighbour ! {connect, NodeLevel, {BNWeight, NodeName, BestNodeNeighbour}},
-                                                NewEdgeList = changeEdgeState(EdgeList, BestNode, branch)
+                                                BestEdgeNeighbour ! {connect, NodeLevel, {BNWeight, NodeName, BestNodeNeighbour}},
+                                                NewEdgeList = changeEdgeState(EdgeList, BestEdge, branch)
                                         end;
                                     false -> 
                                         NewEdgeList = EdgeList,
@@ -201,8 +205,31 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
 .
 
 
+sendinitiate([Head|EdgeList], Edge, Level, FragName, NodeState, NodeName, FindCount) ->
+    {Weight, Neighbour, State} = H,
+    {_Weight, EdgeNeighbour, _self} = Edge,
+    case EdgeNeighbour == Neighbour of
+        false ->
+            case State == branch of
+                true ->
+                    Neighbour ! {initiate, Level, FragName, {Weight, NodeName, Neighbour}}
+                        case NodeState == find of
+                            true -> NewFindCount = FindCount+1;
+                            false -> NewFindCount = FindCount
+                        end;
+                false ->
+                    NewFindCount = FindCount
+            end
+    end
+    sendinitiate(EdgeList, Edge, Level, FragName, NodeState, NodeName, NewFindCount)    
+.
+
+sendinitiate([], _Edge, _Level, _FragName, _NodeState, _NodeName, FindCount)
+    FindCount
+.
+
 searchAKmG(EdgeList) ->
-    {Edge|Tail} = EdgeList,
+    [Edge|Tail] = EdgeList,
     case getEdgeState(Edge) == basic of
         true ->
             searchAKmG(Tail, Edge);
@@ -212,12 +239,13 @@ searchAKmG(EdgeList) ->
 .
 
 searchAKmG([]) ->
+    io:fwrite("Fehler: keine neue Basic Edge in Liste\n")
     %%Fehlernachricht!!!!!!
     %%keine neue Basic Edge in der Liste
 .
 
 searchAKmG(List, Edge) ->
-    {Edge2|Tail} = List,
+    [Edge2|Tail] = List,
     case getEdgeState(Edge2) == basic of
         true ->
             {Weight1, _, _} = Edge,
@@ -225,7 +253,7 @@ searchAKmG(List, Edge) ->
             case (Weight2<Weight1) of
                 true -> searchAKmG(Tail, Edge2);
                 false -> seachAKmG(Tail, Edge)
-            end
+            end;
         false ->
             searchAKmG(Tail, Edge)
     end
@@ -237,17 +265,24 @@ searchAKmG([], Edge) ->
 
 
 getEdgeState(EdgeList, Edge) ->
-    {Weight, Neighbour, _self} = Edge,
-    EdgeWithState = orddict:fetch(Neighbour, Edge),
-    {_weight,_neighbour, _self, State} = EdgeWithState,
+    {_Weight, Neighbour, _self} = Edge,
+    EdgeWithState = lists:keyfind(Neighbour, 2, EdgeList),
+    {_weight,_neighbour, State} = EdgeWithState,
     State
 .
 
 
 test_procedure(EdgeList) ->
-
+    io:fwrite("muss noch gemacht werden")
 .
 
+
+ changeEdgeState(EdgeList, Edge, State) ->
+    {Weight, Neighbour, _self} = Edge,
+    EdgeWithState = lists:keyfind(Neighbour, 2, EdgeList),
+    NewEdgeList = lists:keyreplace(Neighbour, 2, EdgeList, {Weight, Neighbour, State}),
+    NewEdgeList
+.
 
 
 
