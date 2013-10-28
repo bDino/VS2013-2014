@@ -203,7 +203,12 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
         
             
             {changeroot, Edge} ->
-            %% sende Changeroot weiter nach außen(an alle außer an die von denen es herkommt???)
+                case getEdgeState(EdgeList, BestEdge)== branch of
+                    true -> 
+                        {Weight, Neighbour, _self} = BestEdge,
+                        Neighbour ! {changeroot, {Weight, NodeName, Neighbour}
+                end,
+                    
                 loop(NodeName, NodeLevel, NodeState,EdgeList,ThisFragName, InBranch, BestEdge, BestWeight, TestNode, FindCount)
         end
     
