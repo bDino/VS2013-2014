@@ -69,7 +69,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                 {_weight, EdgeNeighbour, _self} = Edge,
                 NewInBranch = Neighbour,
                 BestWeight = INFINITY,
-                NewFindCount = sendInitiate(EdgeList, Edge, Level, FragName, State, NodeName},
+                NewFindCount = sendInitiate(EdgeList, Edge, Level, FragName, State, NodeName),
                 
                 %%wenn State=find dann find-count raufsetzen
                 
@@ -212,7 +212,7 @@ sendinitiate([Head|EdgeList], Edge, Level, FragName, NodeState, NodeName, FindCo
         false ->
             case State == branch of
                 true ->
-                    Neighbour ! {initiate, Level, FragName, {Weight, NodeName, Neighbour}}
+                    Neighbour ! {initiate, Level, FragName, {Weight, NodeName, Neighbour}},
                         case NodeState == find of
                             true -> NewFindCount = FindCount+1;
                             false -> NewFindCount = FindCount
@@ -220,11 +220,11 @@ sendinitiate([Head|EdgeList], Edge, Level, FragName, NodeState, NodeName, FindCo
                 false ->
                     NewFindCount = FindCount
             end
-    end
+    end,
     sendinitiate(EdgeList, Edge, Level, FragName, NodeState, NodeName, NewFindCount)    
 .
 
-sendinitiate([], _Edge, _Level, _FragName, _NodeState, _NodeName, FindCount)
+sendinitiate([], _Edge, _Level, _FragName, _NodeState, _NodeName, FindCount) ->
     FindCount
 .
 
