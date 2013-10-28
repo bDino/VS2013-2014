@@ -167,9 +167,9 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                                     false -> 
                                         NewEdgeList = EdgeList,
                                         %nur wenn weight = INFINITY ist
-                                        case Weight == BestWeight of
+                                        case Weight == BestWeight == ?INFINITY of
                                             true ->
-                                                exit
+                                                exit("Algo ist durch")
                                                 %%Algo ist fertig!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!            EXIT EXIT EXIT EXIT
                                         end
                                 end 
