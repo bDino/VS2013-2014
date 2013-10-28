@@ -5,4 +5,5 @@ deps
 *.plt
 .DS_Store
 *.log
-*.cfg
+A1/1 - Client/*.cfg
+A1/2 - Server/*.cfg
