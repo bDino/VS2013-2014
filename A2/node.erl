@@ -36,7 +36,7 @@ start(NodeName) ->
     InBranch = nil, BestEdge = nil, BestWeight = nil, TestNode = nil,
     ThisFragName = nil,
     
-    loop(NodeName, Level, State, NewEdgeList, ThisFragName, InBranch, BestEdge, BestWeight, TestNode, FindCount),
+    loop(self(), Level, State, NewEdgeList, ThisFragName, InBranch, BestEdge, BestWeight, TestNode, FindCount),
     self()
 .
 
@@ -292,13 +292,48 @@ test_procedure(EdgeList) ->
 
 loadCfg([Head|Tail],EdgeList) -> 
     {Weight,NodeName} = Head,
-    Edge = {Weight,NodeName,basic},
-    NewEdgeList = lists:append(Edge,EdgeList),
     
+    {Name,FullNodeName} = NodeName,
+    
+    NodePid = ping_node(FullNodeName, Name),
+   
+    
+    Edge = {Weight,NodePid,basic},
+    NewEdgeList = lists:append(Edge,EdgeList),
     loadCfg(Tail,NewEdgeList)
 ;
 
 loadCfg([],EdgeList) -> EdgeList.
+
+
+
+ping_node(FullName, Name) ->
+     %Verbindungsaufbau zum Nachbarn
+    case net_adm:ping(FullName) of
+         %We received an answer from the node.
+        pong ->
+            
+            PID = global:whereis_name(Name),
+                
+                case PID == undefined of
+                
+                    true -> io:format("The PID For the Node ~p could not be retrieved!\n",[Name]);
+                    false -> io:format("A connection to the node with PID ~p and Name ~p could be established :). \n", [PID, Name])
+                
+                end;
+                    
+        % The server-node failed to answer :(.
+        pang -> 
+            timer:sleep(1000),
+            io:format("A connection to the server with PID ~p could not be established :(. \n", [FullName]),
+            PID = ping_node(FullName, Name)
+    end,
+    PID
+.
+
+
+
+
 
 
     
