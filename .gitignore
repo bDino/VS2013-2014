@@ -7,3 +7,4 @@ deps
 *.log
 A1/1 - Client/*.cfg
 A1/2 - Server/*.cfg
+*.vpp.working
