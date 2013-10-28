@@ -35,8 +35,7 @@ getmessages(ClientId, ClientList, ClientLifetime) ->
 		end,
 	
 	NewClientList = addClient(ClientId, LastMsgId, ClientList),
-	{NewClientList, LastMsgId}
-.
+	{NewClientList, LastM.
 	
 	receive
 		{Message, NewMsgId, Terminated} ->
