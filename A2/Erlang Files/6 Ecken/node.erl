@@ -48,6 +48,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
         receive
             {connect, Level, Edge} ->
                 {Weight, Neighbour, _self} = Edge,
+                io:format("~p received connect from Node ~p\n", [NodeName,Neighbour]),
                 case Level<NodeLevel of
                     true -> 
                         NewEdgeList = changeEdgeState(EdgeList, Edge, branch),
@@ -78,6 +79,9 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                 NewInBranch = Edge,
                 NewBestWeight = ?INFINITY,
                 NewBestEdge = nil,
+                
+                io:format("~p makes a new Fragment with ~p. FragName = ~p, FragLevel = ~p\n", [self(),Neighbour, FragName, Level]),
+                
                 NewFindCount = sendinitiate(EdgeList, Edge, Level, FragName, State, NodeName, FindCount),
                 
                 
@@ -182,7 +186,8 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
             {reject, Edge} ->
                 case getEdgeState(EdgeList, Edge) == basic of
                     true ->
-                        NewEdgeList = changeEdgeState(EdgeList, Edge, rejected);
+                        NewEdgeList = changeEdgeState(EdgeList, Edge, rejected),
+                        io:format("~p marked as rejected in Node ~p\n", [Edge, NodeName]);
                     false ->
                         NewEdgeList = EdgeList
                 end,
