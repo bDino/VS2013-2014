@@ -17,21 +17,23 @@ start(NodeName) ->
 
     EdgeList_temp = [],
 
-    
+    global:register_name(NodeName,self()),
     {ok, ConfigListe} = file:consult(lists:concat([NodeName,".cfg"])),
     EdgeList = loadCfg(ConfigListe,EdgeList_temp),    
     
     %ServerPID = spawn(fun() -> loop(self(),Lifetime,ClientmanagerPID,QueuemanagerPID,0) end),
     
-    global:register_name(NodeName,self()),
+    
     %logging("server.log","...Server started and registered with Servername ...\n"),
     
-    Edge = searchAKmG(EdgeList),
+    {True,Edge} = searchAKmG(EdgeList),
     {Weight, Neighbour, _EdgeState} = Edge,
     NewEdgeList = changeEdgeState(EdgeList, Edge, branch),
     Level = 0,
     FindCount = 0,
-    Neighbour ! {connect, Level, {Weight, NodeName, Neighbour}},
+    
+    io:format("Sending Connect to Neighbour ~p\n", [Neighbour]),
+    Neighbour ! {connect, Level, {Weight, self(), Neighbour}},
     State = found,
     InBranch = nil, BestEdge = nil, BestWeight = nil, TestEdge = nil,
     ThisFragName = nil,
@@ -46,42 +48,42 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
         receive
             {connect, Level, Edge} ->
                 {Weight, Neighbour, _self} = Edge,
-                case NodeLevel>Level of
+                case Level<NodeLevel of
                     true -> 
                         NewEdgeList = changeEdgeState(EdgeList, Edge, branch),
-                        Neighbour ! {initiate, NodeLevel, ThisFragName, NodeState, {Weight, NodeName, Neighbour}};
+                        Neighbour ! {initiate, NodeLevel, ThisFragName, NodeState, {Weight, NodeName, Neighbour}},
+                        case NodeState==find of
+                            true -> NewFindCount = FindCount+1;
+                            false-> NewFindCount = FindCount
+                        end;
                     false ->
                         NewEdgeList = EdgeList,
-                        case (getEdgeState(EdgeList, Edge)==basic) of
+                        case (getEdgeState(EdgeList, Edge) == basic) of
                             true ->
                                 NodeName ! {connect, Level, Edge};
                             false ->
                                 Neighbour ! {initiate, NodeLevel+1, Weight, find, {Weight, NodeName, Neighbour}}
-                                %%nicht sicher über die nächsten Schritte
-                                %NewNodeLevel = NodeLevel+1,
-                                %NewFragName = Weight;
                         end
                     end,
-                
-            
                 loop(NodeName, NodeLevel, NodeState, NewEdgeList, ThisFragName, InBranch, BestEdge, BestWeight, TestEdge, FindCount);
             
             
             {initiate, Level, FragName, State, Edge} ->
+                {_weight,EdgeNeighbour,_self} = Edge,
+                io:format("~p received initiate from Node ~p\n", [self(),EdgeNeighbour]),
                 NewNodeLevel = Level,
                 NewFragName = FragName,
                 %NewNodeState = State,
-                {_weight, EdgeNeighbour, _self} = Edge,
-                NewInBranch = EdgeNeighbour,
-                BestWeight = ?INFINITY,
-                NewFindCount = sendinitiate(EdgeList, Edge, Level, FragName, State, NodeName,FindCount),
+                NewInBranch = Edge,
+                NewBestWeight = ?INFINITY,
+                NewBestEdge = nil,
+                NewFindCount = sendinitiate(EdgeList, Edge, Level, FragName, State, NodeName, FindCount),
                 
-                %%wenn State=find dann find-count raufsetzen
                 
                 case State == find of
                     true ->
                         %%Test Procedure
-                        AKmG = searchAKmG(EdgeList),
+                        {True,AKmG} = searchAKmG(EdgeList),
                         {OK, AKmGEdge} = AKmG,
                         case OK  of
                             true ->
@@ -91,62 +93,68 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                                 NewNodeState = State;
                             false ->
                                 NewTestEdge = nil,
-                                NewNodeState = report_procedure(NewFindCount, TestEdge, State, BestWeight, NewInBranch)
+                                NewNodeState = report_procedure(NewFindCount, NewTestEdge, State, NewBestWeight, NewInBranch)
                         end;
                     false ->
                         NewNodeState = State,
                         NewTestEdge = TestEdge
                 end,
         
-                loop(NodeName, NewNodeLevel, NewNodeState, EdgeList, NewFragName, NewInBranch, BestEdge, BestWeight, NewTestEdge, NewFindCount);
+                loop(NodeName, NewNodeLevel, NewNodeState, EdgeList, NewFragName, NewInBranch, NewBestEdge, NewBestWeight, NewTestEdge, NewFindCount);
         
             
            
             {test, Level, FragName, Edge} ->
+            {Weight,Neighbour,_self} = Edge,
+            io:format("~p received test from Node ~p\n", [self(),Neighbour]),
                 %%aufwecken wenn er schläft
                 %%wenn Level größer als NodeLevel dann warten...siehe unten
-                {Weight, Neighbour, _self} = Edge,
                 ThisEdge = {Weight, NodeName, Neighbour},
-                case FragName == ThisFragName of
-                    true ->  
-                        %changeEdgeState for Edge: ThisEdge to Rejected!
-                        case (getEdgeState(EdgeList, Edge) == basic) of
-                            true -> 
-                                    NewEdgeList = changeEdgeState(EdgeList, Edge, rejected),
-                                    case TestEdge == Edge of
-                                        true -> 
-                                            %Test Procedure
-                                            AKmG = searchAKmG(EdgeList),
-                                            {OK, AKmGEdge} = AKmG,
-                                            case OK  of
-                                                true ->
-                                                    NewTestEdge = AKmGEdge,
-                                                    {Weight, Neighbour, _self} = NewTestEdge,
-                                                    Neighbour ! {test, Level, FragName, {Weight, NodeName, Neighbour}},
-                                                    NewNodeState = NodeState;
-                                                false ->
-                                                    NewTestEdge = nil,
-                                                    NewNodeState = report_procedure(FindCount, NewTestEdge, NodeState, BestWeight, InBranch)
-                                            end;
-                                        false -> 
-                                            Neighbour ! {reject, ThisEdge},
-                                            NewNodeState = NodeState,
-                                            NewTestEdge = TestEdge
-                                    end;
-                            false -> 
-                                    NewEdgeList = EdgeList,
-                                    NewNodeState = NodeState,
-                                    NewTestEdge = TestEdge
-                        end;
+                case NodeLevel>=Level of
+                    true ->
+                        case FragName == ThisFragName of
+                            true ->  
+                                %changeEdgeState for Edge: ThisEdge to Rejected!
+                                case (getEdgeState(EdgeList, Edge) == basic) of
+                                    true -> 
+                                        NewEdgeList = changeEdgeState(EdgeList, Edge, rejected),
+                                        case TestEdge == Edge of
+                                            true -> 
+                                                %Test Procedure
+                                                {True,AKmG} = searchAKmG(EdgeList),
+                                                {OK, AKmGEdge} = AKmG,
+                                                case OK  of
+                                                    true ->
+                                                        NewTestEdge = AKmGEdge,
+                                                        {Weight, Neighbour, _self} = NewTestEdge,
+                                                        Neighbour ! {test, Level, FragName, {Weight, NodeName, Neighbour}},
+                                                        NewNodeState = NodeState;
+                                                    false ->
+                                                        NewTestEdge = nil,
+                                                        NewNodeState = report_procedure(FindCount, NewTestEdge, NodeState, BestWeight, InBranch)
+                                                end;
+                                            false -> 
+                                                Neighbour ! {reject, ThisEdge},
+                                                NewNodeState = NodeState,
+                                                NewTestEdge = TestEdge
+                                        end;
+                                    false -> 
+                                        NewEdgeList = EdgeList,
+                                        NewNodeState = NodeState,
+                                        NewTestEdge = TestEdge
+                                end;
                         
-                    false ->  
-                        NewEdgeList = EdgeList,
-                        case NodeLevel >= Level of
-                            true ->     Neighbour ! {accept, ThisEdge};
-                            false ->    NodeName ! {test, Level, FragName, Edge}
-                        end,
+                            false -> 
+                                NewNodeState = NodeState,
+                                NewTestEdge = TestEdge,
+                                NewEdgeList = EdgeList,
+                                Neighbour ! {accept, ThisEdge}
+                        end;
+                    false ->    
+                        NodeName ! {test, Level, FragName, Edge},
                         NewNodeState = NodeState,
-                        NewTestEdge = TestEdge
+                        NewTestEdge = TestEdge,
+                        NewEdgeList = EdgeList
                 end,
                 loop(NodeName, NodeLevel, NewNodeState, NewEdgeList, ThisFragName, InBranch, BestEdge, BestWeight, NewTestEdge, FindCount);
                 
@@ -169,12 +177,35 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
             
                 loop(NodeName, NodeLevel, NewNodeState, EdgeList, ThisFragName, InBranch, NewBestEdge, NewBestWeight, NewTestEdge, FindCount);
             
+            
+            {reject, Edge} ->
+                case getEdgeState(EdgeList, Edge) == basic of
+                    true ->
+                        NewEdgeList = changeEdgeState(EdgeList, Edge, rejected);
+                    false ->
+                        NewEdgeList = EdgeList
+                end,
+                AKmG = searchAKmG(EdgeList),
+                {OK, AkmGEdge} = AKmG,
+                case OK  of
+                    true ->
+                        NewNodeState= NodeState,
+                        NewTestEdge = AKmGEdge,
+                        {Weight, Neighbour, _self} = TestEdge,
+                        Neighbour ! {test, Level, FragName, {Weight, NodeName, Neighbour}};
+                    false ->
+                        NewTestEdge = nil,
+                        NewNodeState = report_procedure(FindCount, TestEdge, NodeState, BestWeight, InBranch)
+                end,
+                loop(NodeName, NodeLevel, NewNodeState, NewEdgeList, ThisFragName, InBranch, BestEdge, BestWeight, NewTestEdge, FindCount),
+                
                         
                     
             {report, Weight, Edge} ->
             %% getBranches and send report over Branch-Edges
             %% if Branch == Core 
                 {Weight, Neighbour, _self} = Edge,
+                io:format("~p received report from Node ~p\n", [self(),Neighbour]),
                 case InBranch == Neighbour of
                     true ->
                         case NodeState == find of
@@ -216,7 +247,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                         case Weight<BestWeight of
                             true ->
                                 NewBestWeight = Weight,
-                                NewBestEdge = {Weight, Neighbour, NodeName};
+                                NewBestEdge = Edge;
                             false ->
                                 NewBestWeight = BestWeight,
                                 NewBestEdge = BestEdge
@@ -233,14 +264,18 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                 loop(NodeName, NodeLevel, NewNodeState, NewEdgeList, ThisFragName, InBranch, NewBestEdge, NewBestWeight, TestEdge, NewFindCount);
         
             
-            {changeroot, _Edge} ->
-                case getEdgeState(EdgeList, BestEdge)== branch of
-                    true -> 
-                        {Weight, Neighbour, _self} = BestEdge,
-                        Neighbour ! {changeroot, {Weight, NodeName, Neighbour}}
+            {changeroot, Edge} ->
+                io:format("~p received initiate from Node ~p\n", [self(),Neighbour]),
+                {BNWeight, BestEdgeNeighbour, _self} = BestEdge,
+                case getEdgeState(EdgeList,BestEdge) == branch of
+                    true ->
+                        NewEdgeList = EdgeList,
+                        BestEdgeNeighbour ! {changeroot, {BNWeight, NodeName, BestEdgeNeighbour}};
+                    false ->
+                        BestEdgeNeighbour ! {connect, NodeLevel, {BNWeight, NodeName, BestEdgeNeighbour}},
+                        NewEdgeList = changeEdgeState(EdgeList, BestEdge, branch)
                 end,
-                    
-                loop(NodeName, NodeLevel, NodeState,EdgeList,ThisFragName, InBranch, BestEdge, BestWeight, TestEdge, FindCount)
+                loop(NodeName, NodeLevel, NodeState,NewEdgeList,ThisFragName, InBranch, BestEdge, BestWeight, TestEdge, FindCount)
         end
     
 .
@@ -253,7 +288,7 @@ sendinitiate([Head|EdgeList], Edge, Level, FragName, NodeState, NodeName, FindCo
         false ->
             case State == branch of
                 true ->
-                    Neighbour ! {initiate, Level, FragName, {Weight, NodeName, Neighbour}},
+                    Neighbour ! {initiate, Level, FragName, NodeState, {Weight, NodeName, Neighbour}},
                         case NodeState == find of
                             true -> NewFindCount = FindCount+1;
                             false -> NewFindCount = FindCount
@@ -309,6 +344,7 @@ searchAKmG([], Edge) ->
 getEdgeState(EdgeList, Edge) ->
     {_Weight, Neighbour, _self} = Edge,
     EdgeWithState = lists:keyfind(Neighbour, 2, EdgeList),
+    
     {_weight,_neighbour, State} = EdgeWithState,
     State
 .
@@ -357,7 +393,7 @@ loadCfg([Head|Tail],EdgeList) ->
    
     
     Edge = {Weight,NodePid,basic},
-    NewEdgeList = lists:append(Edge,EdgeList),
+    NewEdgeList = [Edge|EdgeList],
     loadCfg(Tail,NewEdgeList)
 ;
 
@@ -388,9 +424,9 @@ ping_node(FullName, Name) ->
         pang -> 
             timer:sleep(1000),
             io:format("Ping for PID ~p went wrong. \n", [FullName]),
-            PID = ping_node(FullName, Name)
+            NewPID = ping_node(FullName, Name)
     end,
-    PID
+    NewPID
 .
 
 
