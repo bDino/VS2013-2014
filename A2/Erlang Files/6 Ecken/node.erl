@@ -80,7 +80,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                 NewBestWeight = ?INFINITY,
                 NewBestEdge = nil,
                 
-                io:format("~p makes a new Fragment with ~p. FragName = ~p, FragLevel = ~p\n", [self(),Neighbour, FragName, Level]),
+                io:format("~p makes a new Fragment with ~p. FragName = ~p, FragLevel = ~p\n", [self(),EdgeNeighbour, FragName, Level]),
                 
                 NewFindCount = sendinitiate(EdgeList, Edge, Level, FragName, State, NodeName, FindCount),
                 
