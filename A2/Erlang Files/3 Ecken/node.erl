@@ -32,7 +32,7 @@ start(NodeName) ->
     Level = 0,
     FindCount = 0,
     
-    io:format("Sending Connect to Neighbour ~p\n", [Neighbour]),
+    io:format("~p: Sending Connect to Neighbour ~p\n", [timeMilliSecond(),Neighbour]),
     Neighbour ! {connect, Level, {Weight, self(), Neighbour}},
     State = found,
     InBranch = nil, BestEdge = nil, BestWeight = nil, TestEdge = nil,
@@ -48,10 +48,11 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
         receive
             {connect, Level, Edge} ->
                 {Weight, Neighbour, _self} = Edge,
-                io:format("~p received connect from Node ~p\n", [NodeName,Neighbour]),
+                io:format("~p: ~p received connect from Node ~p\n", [timeMilliSecond(),NodeName,Neighbour]),
                 case Level<NodeLevel of
                     true -> 
                         NewEdgeList = changeEdgeState(EdgeList, Edge, branch),
+                        io:format("~p: Sending initiate to Neighbour ~p\n", [timeMilliSecond(),Neighbour]),
                         Neighbour ! {initiate, NodeLevel, ThisFragName, NodeState, {Weight, NodeName, Neighbour}},
                         case NodeState==find of
                             true -> NewFindCount = FindCount+1;
@@ -64,6 +65,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                             true ->
                                 NodeName ! {connect, Level, Edge};
                             false ->
+                                io:format("~p: Sending initiate to Neighbour ~p\n", [timeMilliSecond(),Neighbour]),
                                 Neighbour ! {initiate, NodeLevel+1, Weight, find, {Weight, NodeName, Neighbour}}
                         end
                     end,
@@ -72,7 +74,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
             
             {initiate, Level, FragName, State, Edge} ->
                 {_weight,EdgeNeighbour,_self} = Edge,
-                io:format("~p received initiate from Node ~p\n", [self(),EdgeNeighbour]),
+                io:format("~p: ~p received initiate from Node ~p\n", [timeMilliSecond(), self(),EdgeNeighbour]),
                 NewNodeLevel = Level,
                 NewFragName = FragName,
                 %NewNodeState = State,
@@ -80,7 +82,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                 NewBestWeight = ?INFINITY,
                 NewBestEdge = nil,
                 
-                io:format("~p makes a new Fragment with ~p. FragName = ~p, FragLevel = ~p\n", [self(),EdgeNeighbour, FragName, Level]),
+                io:format("~p: ~p makes a new Fragment with ~p. FragName = ~p, FragLevel = ~p\n", [timeMilliSecond(), self(),EdgeNeighbour, FragName, Level]),
                 
                 NewFindCount = sendinitiate(EdgeList, Edge, Level, FragName, State, NodeName, FindCount),
                 
@@ -94,6 +96,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                             true ->
                                 NewTestEdge = AKmGEdge,
                                 {Weight, Neighbour, _edgeState} = NewTestEdge,
+                                io:format("~p: Sending test to Neighbour ~p\n", [timeMilliSecond(),Neighbour]),
                                 Neighbour ! {test, Level, FragName, {Weight, NodeName, Neighbour}},
                                 NewNodeState = State;
                             false ->
@@ -111,24 +114,24 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
            
             {test, Level, FragName, Edge} ->
                 {Weight,Neighbour,_self} = Edge,
-                io:format("~p received test from Node ~p\n", [self(),Neighbour]),
+                io:format("~p: ~p received test from Node ~p\n", [timeMilliSecond(), self(),Neighbour]),
                 %%aufwecken wenn er schläft
                 %%wenn Level größer als NodeLevel dann warten...siehe unten
                 ThisEdge = {Weight, NodeName, Neighbour},
                 case NodeLevel>=Level of
                     true ->
-                        io:format("TEST: Level von ~p größer gleich Level von ~p: ~p >= ~p\n", [self(),Neighbour, NodeLevel, Level]),
+                        io:format("~p: TEST: Level von ~p größer gleich Level von ~p: ~p >= ~p\n", [timeMilliSecond(), self(),Neighbour, NodeLevel, Level]),
                         case FragName == ThisFragName of
                             true -> 
-                                io:format("TEST: FragName ~p gleich von ~p und ~p\n", [FragName, self(),Neighbour]),
+                                io:format("~p: TEST: FragName ~p gleich von ~p und ~p\n", [timeMilliSecond(), FragName, self(),Neighbour]),
                                 %changeEdgeState for Edge: ThisEdge to Rejected!
                                 case (getEdgeState(EdgeList, Edge) == basic) of
                                     true -> 
-                                        io:format("TEST: Basic-Edge zwischen ~p und ~p\n", [self(),Neighbour]),
+                                        io:format("~p: TEST: Basic-Edge zwischen ~p und ~p\n", [timeMilliSecond(), self(),Neighbour]),
                                         NewEdgeList = changeEdgeState(EdgeList, Edge, rejected),
                                         case TestEdge == Edge of
                                             true -> 
-                                                
+                                                io:format("~p: TEST: Test-Edge ist gleich Edge ~p\n", [timeMilliSecond(), Edge]),
                                                 %Test Procedure
                                                 AKmG = searchAKmG(EdgeList),
                                                 {OK, AKmGEdge} = AKmG,
@@ -136,6 +139,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                                                     true ->
                                                         NewTestEdge = AKmGEdge,
                                                         {Weight, Neighbour, _self} = NewTestEdge,
+                                                        io:format("~p: Sending test to Neighbour ~p\n", [timeMilliSecond(),Neighbour]),
                                                         Neighbour ! {test, Level, FragName, {Weight, NodeName, Neighbour}},
                                                         NewNodeState = NodeState;
                                                     false ->
@@ -143,6 +147,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                                                         NewNodeState = report_procedure(FindCount, NewTestEdge, NodeState, BestWeight, InBranch)
                                                 end;
                                             false -> 
+                                                io:format("~p: Sending reject to Neighbour ~p\n", [timeMilliSecond(),Neighbour]),
                                                 Neighbour ! {reject, ThisEdge},
                                                 NewNodeState = NodeState,
                                                 NewTestEdge = TestEdge
@@ -157,6 +162,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                                 NewNodeState = NodeState,
                                 NewTestEdge = TestEdge,
                                 NewEdgeList = EdgeList,
+                                io:format("~p: Sending accept to Neighbour ~p\n", [timeMilliSecond(),Neighbour]),
                                 Neighbour ! {accept, ThisEdge}
                         end;
                     false ->    
@@ -165,6 +171,8 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                         NewTestEdge = TestEdge,
                         NewEdgeList = EdgeList
                 end,
+        
+                io:format("~p: EDGELIST von ~p am Ende der TESTREAKTION: ~p\n", [timeMilliSecond(), self(),NewEdgeList]),
                 loop(NodeName, NodeLevel, NewNodeState, NewEdgeList, ThisFragName, InBranch, BestEdge, BestWeight, NewTestEdge, FindCount);
                 
         
@@ -189,26 +197,29 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
             
             {reject, Edge} ->
                 {_Weight, Neighbour, _self} = Edge,
-                io:format("~p received reject from Node ~p\n", [self(),Neighbour]),
+                io:format("~p, ~p received reject from Node ~p\n", [timeMilliSecond(), self(),Neighbour]),
                 case getEdgeState(EdgeList, Edge) == basic of
                     true ->
                         NewEdgeList = changeEdgeState(EdgeList, Edge, rejected),
-                        io:format("~p marked as rejected in Node ~p\n", [Edge, NodeName]);
+                        io:format("~p, ~p marked as rejected in Node ~p\n", [timeMilliSecond(), Edge, NodeName]);
                     false ->
                         NewEdgeList = EdgeList
                 end,
                 AKmG = searchAKmG(EdgeList),
                 {OK, AKmGEdge} = AKmG,
+                io:format("~p: AKmG von ~p: ~p\n", [timeMilliSecond(), self(),AKmG]),
                 case OK  of
                     true ->
                         NewNodeState= NodeState,
                         NewTestEdge = AKmGEdge,
                         {Weight, Neighbour, _self} = TestEdge,
+                        io:format("~p: Sending test to Neighbour ~p\n", [timeMilliSecond(),Neighbour]),
                         Neighbour ! {test, NodeLevel, ThisFragName, {Weight, NodeName, Neighbour}};
                     false ->
                         NewTestEdge = nil,
                         NewNodeState = report_procedure(FindCount, TestEdge, NodeState, BestWeight, InBranch)
                 end,
+                io:format("~p: EDGELIST von ~p am Ende der REJECT: ~p\n", [timeMilliSecond(), self(),NewEdgeList]),
                 loop(NodeName, NodeLevel, NewNodeState, NewEdgeList, ThisFragName, InBranch, BestEdge, BestWeight, NewTestEdge, FindCount);
                 
                         
@@ -217,7 +228,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
             %% getBranches and send report over Branch-Edges
             %% if Branch == Core 
                 {Weight, Neighbour, _self} = Edge,
-                io:format("~p received report from Node ~p\n", [self(),Neighbour]),
+                io:format("~p: ~p received report from Node ~p\n", [timeMilliSecond(), self(),Neighbour]),
                 case InBranch == Neighbour of
                     true ->
                         case NodeState == find of
@@ -233,8 +244,10 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                                         case getEdgeState(EdgeList,BestEdge) == branch of
                                             true ->
                                                 NewEdgeList = EdgeList,
+                                                io:format("~p: Sending changeroot to Neighbour ~p\n", [timeMilliSecond(),BestEdgeNeighbour]),
                                                 BestEdgeNeighbour ! {changeroot, {BNWeight, NodeName, BestEdgeNeighbour}};
                                             false ->
+                                                io:format("~p: Sending Connect to Neighbour ~p\n", [timeMilliSecond(),BestEdgeNeighbour]),
                                                 BestEdgeNeighbour ! {connect, NodeLevel, {BNWeight, NodeName, BestEdgeNeighbour}},
                                                 NewEdgeList = changeEdgeState(EdgeList, BestEdge, branch)
                                         end;
@@ -269,6 +282,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                             true ->
                                 NewNodeState = found,
                                 {IBWeight, InNeighbour, _self} = InBranch,
+                                io:format("~p: Sending report to Neighbour ~p\n", [timeMilliSecond(),InNeighbour]),
                                 InNeighbour ! {report, NewBestWeight, {IBWeight, NodeName, InNeighbour}};
                             false ->
                                 NewNodeState = NodeState
@@ -279,13 +293,15 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
             
             {changeroot, Edge} ->
                 {_w, Neighbour, _s} = Edge,
-                io:format("~p received initiate from Node ~p\n", [self(),Neighbour]),
+                io:format("~p: ~p received initiate from Node ~p\n", [timeMilliSecond(), self(),Neighbour]),
                 {BNWeight, BestEdgeNeighbour, _self} = BestEdge,
                 case getEdgeState(EdgeList,BestEdge) == branch of
                     true ->
                         NewEdgeList = EdgeList,
+                        io:format("~p: Sending changeroot to Neighbour ~p\n", [timeMilliSecond(),BestEdgeNeighbour]),
                         BestEdgeNeighbour ! {changeroot, {BNWeight, NodeName, BestEdgeNeighbour}};
                     false ->
+                        io:format("~p: Sending Connect to Neighbour ~p\n", [timeMilliSecond(),BestEdgeNeighbour]),
                         BestEdgeNeighbour ! {connect, NodeLevel, {BNWeight, NodeName, BestEdgeNeighbour}},
                         NewEdgeList = changeEdgeState(EdgeList, BestEdge, branch)
                 end,
@@ -304,6 +320,7 @@ sendinitiate([Head|EdgeList], Edge, Level, FragName, NodeState, NodeName, FindCo
         false ->
             case State == branch of
                 true ->
+                    io:format("~p: Sending initiate to Neighbour ~p\n", [timeMilliSecond(),Neighbour]),
                     Neighbour ! {initiate, Level, FragName, NodeState, {Weight, NodeName, Neighbour}},
                         case NodeState == find of
                             true -> NewFindCount = FindCount+1;
@@ -382,9 +399,11 @@ test_procedure(EdgeList, FindCount, TestEdge, NodeState, BestWeight, InBranch, L
 .
 
 report_procedure(FindCount, TestEdge, NodeState, BestWeight, InBranch) ->
+    io:format("~p: REPORTPROCEDURE mit FindCount: ~p, TestEdge = ~p, NodeState= ~p, BestWeight= ~p, InBranch= ~p\n", [timeMilliSecond(),FindCount, TestEdge, NodeState, BestWeight, InBranch]),
     case (FindCount == 0 andalso TestEdge == nil) of       
         true -> 
             NewNodeState = found,
+            io:format("~p: Sending report to Neighbour ~p\n", [timeMilliSecond(),InBranch]),
             InBranch ! {report, BestWeight};
         false ->
             NewNodeState = NodeState
