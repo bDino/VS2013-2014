@@ -15,6 +15,7 @@
 %
 start(NodeName) ->
 
+
     EdgeList_temp = [],
 
     global:register_name(NodeName,self()),
