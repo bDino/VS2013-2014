@@ -136,9 +136,9 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                                                 case OK  of
                                                     true ->
                                                         NewTestEdge = AKmGEdge,
-                                                        {Weight, Neighbour, _self,_nteName} = NewTestEdge,
-                                                        io:format("~p: Sending test to Neighbour ~p\n", [timeMilliSecond(),EName]),
-                                                        Neighbour ! {test, Level, FragName, {Weight, NodeName, Neighbour,EName}},
+                                                        {Weight, AKmGNeighbour, _self,EName} = NewTestEdge,
+                                                        io:format("~p: Sending test to Neighbour ~p in TESTREAKTION\n", [timeMilliSecond(),AKmGNeighbour]),
+                                                        AKmGNeighbour ! {test, Level, FragName, {Weight, NodeName, Neighbour,EName}},
                                                         NewNodeState = NodeState;
                                                     false ->
                                                         NewTestEdge = nil,
@@ -177,8 +177,10 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
             %%---------------------------------------------------------------------------
             %% TestNode muss mit übergeben werden und BestWeight und BestNode vorher gespeichert werden!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             {accept, Edge} ->
+            {_, _, _,EName} = Edge,
+            io:format("~p, Me received accept from Node ~p\n", [timeMilliSecond(), EName]),
                 NewTestEdge = nil,
-                {Weight, Neighbour, _self} = Edge,
+                {Weight, Neighbour, _self,_} = Edge,
                 case (Weight < BestWeight) of
                     true -> 
                         NewBestEdge = {Weight, Neighbour, NodeName},
@@ -213,9 +215,9 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                     true ->
                         NewNodeState= NodeState,
                         NewTestEdge = AKmGEdge,
-                        {Weight, TestNeighbour, _state} = NewTestEdge,
-                        io:format("~p: Sending test to Neighbour ~p\n", [timeMilliSecond(),TestNeighbour]),
-                        TestNeighbour ! {test, NodeLevel, ThisFragName, {Weight, NodeName, TestNeighbour}};
+                        {Weight, TestNeighbour, _state,NTEName} = NewTestEdge,
+                        io:format("~p: Sending test to Neighbour ~p\n", [timeMilliSecond(),NTEName]),
+                        TestNeighbour ! {test, NodeLevel, ThisFragName, {Weight, NodeName, TestNeighbour,NTEName}};
                     false ->
                         NewTestEdge = nil,
                         NewNodeState = report_procedure(FindCount, NewTestEdge, NodeState, BestWeight, InBranch, NodeName)
@@ -228,9 +230,9 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
             {report, Weight, Edge} ->
             %% getBranches and send report over Branch-Edges
             %% if Branch == Core 
-                {_EdgeWeight, Neighbour, _self} = Edge,
-                {_, IBNeighbour, _} = InBranch,
-                io:format("~p: ~p received report from Node ~p, INBRANCH = ~p, FindCount = ~p, TestEdge = ~p, BestWeight = ~p, Weight = ~p\n", [timeMilliSecond(), NodeName,Neighbour, InBranch, FindCount, TestEdge, BestWeight, Weight]),
+                {_EdgeWeight, Neighbour, _self,EdgeName} = Edge,
+                {_, IBNeighbour, _,_} = InBranch,
+                io:format("~p: ME received report from Node ~p, INBRANCH = ~p, FindCount = ~p, TestEdge = ~p, BestWeight = ~p, Weight = ~p\n", [timeMilliSecond(), EdgeName, InBranch, FindCount, TestEdge, BestWeight, Weight]),
                 case IBNeighbour == Neighbour of
                     true ->
                         io:format("~p: INBRANCH = ~p\n", [timeMilliSecond(), InBranch]),
@@ -412,9 +414,9 @@ report_procedure(FindCount, TestEdge, NodeState, BestWeight, InBranch, NodeName)
     case (FindCount == 0 andalso TestEdge == nil) of       
         true -> 
             NewNodeState = found,
-            {Weight, Neighbour, _self} = InBranch,
-            io:format("~p: Sending report to Neighbour ~p with BestWeight ~p\n", [timeMilliSecond(),Neighbour, BestWeight]),
-            Neighbour ! {report, BestWeight, {Weight, NodeName, Neighbour}};
+            {Weight, Neighbour, _self,InBranchName} = InBranch,
+            io:format("~p: Sending report to Neighbour ~p with BestWeight ~p\n", [timeMilliSecond(),InBranchName, BestWeight]),
+            Neighbour ! {report, BestWeight, {Weight, NodeName, Neighbour,InBranchName}};
         false ->
             NewNodeState = NodeState
     end,
