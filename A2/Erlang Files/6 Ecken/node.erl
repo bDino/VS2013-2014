@@ -110,21 +110,25 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
             
            
             {test, Level, FragName, Edge} ->
-            {Weight,Neighbour,_self} = Edge,
-            io:format("~p received test from Node ~p\n", [self(),Neighbour]),
+                {Weight,Neighbour,_self} = Edge,
+                io:format("~p received test from Node ~p\n", [self(),Neighbour]),
                 %%aufwecken wenn er schläft
                 %%wenn Level größer als NodeLevel dann warten...siehe unten
                 ThisEdge = {Weight, NodeName, Neighbour},
                 case NodeLevel>=Level of
                     true ->
+                        io:format("TEST: Level von ~p größer gleich Level von ~p: ~p >= ~p\n", [self(),Neighbour, NodeLevel, Level]),
                         case FragName == ThisFragName of
-                            true ->  
+                            true -> 
+                                io:format("TEST: FragName ~p gleich von ~p und ~p\n", [FragName, self(),Neighbour]),
                                 %changeEdgeState for Edge: ThisEdge to Rejected!
                                 case (getEdgeState(EdgeList, Edge) == basic) of
                                     true -> 
+                                        io:format("TEST: Basic-Edge zwischen ~p und ~p\n", [self(),Neighbour]),
                                         NewEdgeList = changeEdgeState(EdgeList, Edge, rejected),
                                         case TestEdge == Edge of
                                             true -> 
+                                                
                                                 %Test Procedure
                                                 AKmG = searchAKmG(EdgeList),
                                                 {OK, AKmGEdge} = AKmG,
@@ -184,6 +188,8 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
             
             
             {reject, Edge} ->
+                {_Weight, Neighbour, _self} = Edge,
+                io:format("~p received reject from Node ~p\n", [self(),Neighbour]),
                 case getEdgeState(EdgeList, Edge) == basic of
                     true ->
                         NewEdgeList = changeEdgeState(EdgeList, Edge, rejected),
@@ -237,6 +243,7 @@ loop(NodeName, NodeLevel, NodeState, EdgeList, ThisFragName, InBranch, BestEdge,
                                         %nur wenn weight = INFINITY ist
                                         case Weight == BestWeight andalso BestWeight == ?INFINITY of
                                             true ->
+                                                io:format("Algo ist fertig"),
                                                 exit("Algo ist durch")
                                                 %%Algo ist fertig!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!            EXIT EXIT EXIT EXIT
                                         end
