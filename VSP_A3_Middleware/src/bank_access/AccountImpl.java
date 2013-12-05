@@ -21,13 +21,19 @@ public class AccountImpl extends AccountImplBase {
 	public void transfer(double amount) throws OverdraftException {
 		Reply answer = cMoudule.invokeRemoteMethod("AccountImplBase|transfer|" + amount + "|");
 		
+		if(answer.isInvalid()) throw new OverdraftException(answer.getException().getMessage());
 	}
 
 	@Override
 	public double getBalance() {
 		Reply answer = cMoudule.invokeRemoteMethod("AccountImplBase|getBalance");
 		
-		return Double.parseDouble(answer.getObject().toString());
+		if(answer.isInvalid()) {
+			return 0;//TODO
+		}else
+		{
+			return Double.parseDouble(answer.getObject().toString());
+		}
 	}
 
 }
