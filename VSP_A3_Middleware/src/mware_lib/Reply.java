@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class Reply implements Serializable{
 
 	/**
-	 * 
+	 * Auto generated
 	 */
 	private static final long serialVersionUID = -1732696400448770987L;
 	private String[] message;

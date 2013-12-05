@@ -24,7 +24,6 @@ public class AccountImpl extends AccountImplBase {
 
 	@Override
 	public double getBalance() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 

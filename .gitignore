@@ -17,7 +17,7 @@ A1/2 - Server/*.cfg
 
 # eclipse specific git ignore
 *.pydevproject
-.project
+# .project
 .metadata
 bin/**
 tmp/**
