@@ -21,6 +21,9 @@ public class ObjectPool {
 	}
 	
 	
+	
+	
+	
 	/*
 	 * DS zum Speichern von Objektreferenzen
 	 */
