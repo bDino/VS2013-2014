@@ -1,19 +1,18 @@
 package bank_access;
 
-import java.net.Socket;
-
 import mware_lib.CommunicationModule;
+import mware_lib.Reply;
 
 public class AccountImpl extends AccountImplBase {
 
 	String host;
-	String port;
+	int port;
 	CommunicationModule cHelper;
 	
-	public AccountImpl(String host, String port){
+	public AccountImpl(String host, int port){
 		this.host = host;
 		this.port = port;
-		cHelper = new CommunicationModule(new Socket(host, port));
+		cHelper = new CommunicationModule(host, port);
 	}
 	
 	@Override
@@ -24,7 +23,9 @@ public class AccountImpl extends AccountImplBase {
 
 	@Override
 	public double getBalance() {
-		return 0;
+		Reply answer = cHelper.invokeRemoteMethod("AccountImplBase|getBalance");
+		
+		return Double.parseDouble(answer.getObject().toString());
 	}
 
 }
