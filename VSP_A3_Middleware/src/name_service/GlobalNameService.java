@@ -3,6 +3,9 @@ package name_service;
 import java.io.IOException;
 import java.net.ServerSocket;
 
+/*
+ * Server-side Client Request Handler
+ */
 public class GlobalNameService {
 
 	static final int listenPort = 16347;
