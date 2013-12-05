@@ -17,6 +17,6 @@ public class Request implements Serializable{
 	
 	public byte[] toSerialized()
 	{
-		return ("REQUEST|" + this.message).getBytes();
+		return (this.message).getBytes();
 	}
 }

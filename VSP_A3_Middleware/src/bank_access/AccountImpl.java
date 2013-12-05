@@ -5,25 +5,27 @@ import mware_lib.Reply;
 
 public class AccountImpl extends AccountImplBase {
 
+	String name;
 	String host;
 	int port;
-	CommunicationModule cHelper;
+	CommunicationModule cMoudule;
 	
-	public AccountImpl(String host, int port){
+	public AccountImpl(String name,String host, int port){
+		this.name = name;
 		this.host = host;
 		this.port = port;
-		cHelper = new CommunicationModule(host, port);
+		cMoudule = new CommunicationModule(host, port);
 	}
 	
 	@Override
 	public void transfer(double amount) throws OverdraftException {
-		String message = "transfer|";
+		Reply answer = cMoudule.invokeRemoteMethod("AccountImplBase|transfer|" + amount + "|");
 		
 	}
 
 	@Override
 	public double getBalance() {
-		Reply answer = cHelper.invokeRemoteMethod("AccountImplBase|getBalance");
+		Reply answer = cMoudule.invokeRemoteMethod("AccountImplBase|getBalance");
 		
 		return Double.parseDouble(answer.getObject().toString());
 	}

@@ -8,13 +8,23 @@ import java.net.ServerSocket;
  */
 public class GlobalNameService {
 
-	static final int listenPort = 16347;
+	static final int defaultPort = 16437;
+	static int listenPort;
 	static ObjectPool objectPool = new ObjectPool();
 	static ServerSocket socket = null;
 	static boolean running = true;
 
 	public static void main(String[] args) 
 	{
+		if(args.length != 0){
+			try{
+				listenPort = Integer.parseInt(args[0]);
+			}
+			catch(NumberFormatException ex){
+				listenPort = defaultPort;
+			}
+		}
+		
 		try {
 			while (running) {
 				socket = new ServerSocket(listenPort);
@@ -26,9 +36,6 @@ public class GlobalNameService {
 
 	}
 
-	public void shutdown() 
-	{
-		this.running = false;
-	}
+	public void shutdown() { this.running = false; }
 
 }

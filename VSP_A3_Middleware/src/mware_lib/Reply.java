@@ -25,4 +25,14 @@ public class Reply implements Serializable{
 		return message[message.length -1].equalsIgnoreCase("success");
 	}
 	
+	public boolean isInvalid()
+	{
+		return !isSuccess();
+	}
+	
+	public Exception getException()
+	{
+		return (isSuccess() == false ? null : new Exception(message[4]));
+	}
+	
 }
