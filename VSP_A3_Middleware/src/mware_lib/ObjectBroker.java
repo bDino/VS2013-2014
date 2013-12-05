@@ -44,7 +44,7 @@ public class ObjectBroker {
 			ObjectBroker.port = port;
 			ObjectBroker.broker = (ObjectBroker.broker == null ? new ObjectBroker() : ObjectBroker.broker);
 			nameService =  new NameServiceImplBase(serviceName,port);
-			
+
 			return ObjectBroker.broker;
 		}
 		
