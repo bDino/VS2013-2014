@@ -5,6 +5,7 @@ import java.util.UUID;
 import mware_lib.CommunicationModule;
 import mware_lib.Reply;
 
+//TODO: Exceptions werfen...Overdraft!? das heißt wir müssen doch an den objekten was verändern?? ahhh...
 public class TransactionImpl extends TransactionImplBase {
 
 	//TODO: name?!
@@ -26,6 +27,10 @@ public class TransactionImpl extends TransactionImplBase {
 		Class[] classes = new Class[]{String.class, double.class};
 		Reply reply = commModule.invokeRemoteMethod("ManagerImplBase|createAccount|"+args+"|"+classes);
 
+		if(reply.isInvalid()){
+			RuntimeException e = (RuntimeException) reply.getException();
+			throw e;
+		}
 	}
 
 	@Override
@@ -35,6 +40,13 @@ public class TransactionImpl extends TransactionImplBase {
 		Object[] args = new Object[]{accountId, amount};
 		Class[] classes = new Class[]{String.class, double.class};
 		Reply reply = commModule.invokeRemoteMethod("ManagerImplBase|createAccount|"+args+"|"+classes);
+		
+		if(reply.isInvalid()){
+			RuntimeException e = (RuntimeException) reply.getException();
+			throw e;
+		}
+		//TODO: muss hier was passieren wenn es klappt?
+		
 	}
 
 	@Override
@@ -44,7 +56,16 @@ public class TransactionImpl extends TransactionImplBase {
 		Class[] classes = new Class[]{String.class};
 		Reply reply = commModule.invokeRemoteMethod("ManagerImplBase|createAccount|"+args+"|"+classes);
 		
-		if(reply. return 0;
+		if(reply.isInvalid())
+		{
+			RuntimeException e = (RuntimeException) reply.getException();
+			throw e;
+		}
+		else
+		{
+			double value = (double) reply.getObject();
+			return value;
+		}
 	}
 	
 	

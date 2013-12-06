@@ -17,17 +17,24 @@ public class AccountImpl extends AccountImplBase {
 		cMoudule = new CommunicationModule(host, port);
 	}
 	
+	//TODO: overdraft exception...wie frage ich das ab?
 	@Override
 	public void transfer(double amount) throws OverdraftException {
 		Reply answer = cMoudule.invokeRemoteMethod("AccountImplBase|transfer|" + amount + "|");
 		
+		if(answer.isInvalid()) throw new RuntimeException(answer.getException().getMessage());
 	}
 
 	@Override
 	public double getBalance() {
 		Reply answer = cMoudule.invokeRemoteMethod("AccountImplBase|getBalance");
 		
-		return Double.parseDouble(answer.getObject().toString());
+		if(answer.isInvalid()) {
+			throw new RuntimeException(answer.getException().getMessage());
+		}
+		else {
+			return Double.parseDouble(answer.getObject().toString());
+		}
 	}
 
 }

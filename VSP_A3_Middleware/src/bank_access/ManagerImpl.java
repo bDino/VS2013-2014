@@ -3,6 +3,7 @@ package bank_access;
 
 
 import mware_lib.CommunicationModule;
+import mware_lib.Reply;
 
 public class ManagerImpl extends ManagerImplBase{
 
@@ -20,9 +21,16 @@ public class ManagerImpl extends ManagerImplBase{
 	public String createAccount(String owner, String branch) {
 		Object[] args = new Object[]{owner, branch};
 		Class[] classes = new Class[]{String.class, String.class};
-		commModule.invokeRemoteMethod("ManagerImplBase|Manager|createAccount|"+args+"|"+classes);
+		Reply reply = commModule.invokeRemoteMethod("ManagerImplBase|Manager|createAccount|"+args+"|"+classes);
 		
-		return null;
+		if(reply.isInvalid()){
+			RuntimeException e = (RuntimeException) reply.getException();
+			throw e;
+		}
+		else {
+			//TODO: was wird hier als Rückgabe überhaupt erwartet?
+			return reply.getObject().toString();
+		}
 	}
 
 	

@@ -11,9 +11,20 @@ public abstract class AccountImplBase {
 	
 	public static AccountImplBase narrow_cast(Object o) 
 	{
-		AccountImpl account = null;
+		String name = "";
+		String host = "";
+		int port = 0;
 		Field[] ary  = o.getClass().getFields();
 		
-		return null;
+		for(Field f : ary)
+		{
+			switch(f.getName()){
+				case "Name" : name = f.toString();
+				case "Host" : host = f.toString();
+				case "port" : port = Integer.parseInt(f.toString());
+			}
+		}
+		
+		return (AccountImplBase) new AccountImpl(name,host,port);
 	}
 }
