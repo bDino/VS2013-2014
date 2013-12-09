@@ -3,9 +3,9 @@ package cash_access;
 import java.util.UUID;
 
 import mware_lib.Stub;
-import bank_access.OverdraftException;
 import mware_lib.CommunicationModule;
 import mware_lib.Reply;
+import mware_lib.Request;
 
 //TODO: Exceptions werfen...Overdraft!? das heißt wir müssen doch an den objekten was verändern?? ahhh...
 public class TransactionImpl extends TransactionImplBase {

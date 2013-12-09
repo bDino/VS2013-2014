@@ -3,42 +3,39 @@ package bank_access;
 import mware_lib.CommunicationModule;
 import mware_lib.Reply;
 import mware_lib.Request;
+import mware_lib.Stub;
 
 public class AccountImpl extends AccountImplBase {
 
-	String name;
-	String host;
-	int port;
-	CommunicationModule cMoudule;
-	
-	public AccountImpl(String name,String host, int port){
-		this.name = name;
-		this.host = host;
-		this.port = port;
-		cMoudule = new CommunicationModule(host, port);
+	Stub stub;
+
+	public AccountImpl(Stub stub) {
+		this.stub = stub;
 	}
-	
+
 	@Override
 	public void transfer(double amount) throws OverdraftException {
-		if(getBalance() < amount) throw new OverdraftException("Balance is lower then the amount");
-		
-		Object[] args = new Object[]{amount};
-		Class<?>[] classes = new Class[]{double.class};
-		Request request = new Request(name, "transfer", args, classes);
-		Reply answer = cMoudule.invokeRemoteMethod(request);
-		
-		if(answer.isInvalid()) throw new RuntimeException(answer.getException().getMessage());
+		if (getBalance() < amount)
+			throw new OverdraftException("Balance is lower then the amount");
+
+		Object[] args = new Object[] { amount };
+		Class<?>[] classes = new Class[] { double.class };
+		Request request = new Request(stub.objectName, "transfer", args, classes);
+		Reply answer = stub.delegateMethod(request);
+
+		if (answer.isInvalid())
+			throw new RuntimeException(answer.getException().getMessage());
 	}
 
 	@Override
 	public double getBalance() {
-		Request request = new Request(name, "getBalance", new Object[]{}, new Class<?>[]{});
-		Reply answer = cMoudule.invokeRemoteMethod(request);
-		
-		if(answer.isInvalid()) {
+		Request request = new Request(stub.objectName, "getBalance", new Object[] {},
+				new Class<?>[] {});
+		Reply answer = stub.delegateMethod(request);
+
+		if (answer.isInvalid()) {
 			throw new RuntimeException(answer.getException().getMessage());
-		}
-		else {
+		} else {
 			return Double.parseDouble(answer.getObject().toString());
 		}
 	}
