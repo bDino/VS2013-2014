@@ -25,6 +25,6 @@ public abstract class AccountImplBase {
 			}
 		}
 		
-		return (AccountImplBase) new AccountImpl(name,host,port);
+		return (AccountImplBase) new AccountImpl((Stub) o);
 	}
 }

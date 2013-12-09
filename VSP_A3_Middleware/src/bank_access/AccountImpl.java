@@ -1,6 +1,5 @@
 package bank_access;
 
-import mware_lib.CommunicationModule;
 import mware_lib.Reply;
 import mware_lib.Request;
 import mware_lib.Stub;
