@@ -1,29 +1,33 @@
 package mware_lib;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 
 /**
  * core of the middleware: Maintains a Reference to the NameService Singleton
  */
 public class ObjectBroker {
-	
-	private static String nameServiceName;
-	private static int nameServicePort;
-	private static ObjectBroker broker = null;
-	private static NameServiceImplBase nameService;
-	
+
+	static String nameServiceName;
+	static int nameServicePort;
+	static ObjectBroker broker = null;
+	static NameServiceImplBase nameService;
+	static int gNsPort = 16437;
+	static int listeningPort = 9856;
+	static LocalObjectPool objectPool = new LocalObjectPool();
+	static boolean running = true;
+
 	/**
 	 * @return an Implementation for a local NameService
 	 */
-	public NameServiceImplBase getNameService() 
-	{
+	public NameServiceImplBase getNameService() {
 		return nameService;
 	}
 
 	/**
 	 * shuts down the process, the OjectBroker is running in terminates process
 	 */
-	public void shutdown() 
-	{
+	public void shutdown() {
 		ObjectBroker.broker = null;
 	}
 
@@ -36,18 +40,25 @@ public class ObjectBroker {
 	 *            port NameService is listening at
 	 * @return an ObjectBroker Interface to Nameservice
 	 */
-	public static ObjectBroker init(String serviceName, int port) 
-	{
-		if(!Argument.checkArgument(serviceName) && !Argument.checkArgument(port))
-		{
+	public static ObjectBroker init(String serviceName, int port) {
+		if (!Argument.checkArgument(serviceName)
+				&& !Argument.checkArgument(port)) {
 			ObjectBroker.nameServiceName = serviceName;
 			ObjectBroker.nameServicePort = port;
-			ObjectBroker.broker = (ObjectBroker.broker == null ? new ObjectBroker() : ObjectBroker.broker);
-			//nameService =  (NameServiceImplBase) new NameServiceImpl(serviceName,port);
+			ObjectBroker.broker = (ObjectBroker.broker == null ? new ObjectBroker()
+					: ObjectBroker.broker);
+			nameService = (NameServiceImplBase) new NameServiceImpl(
+					serviceName, port,objectPool);
+
+			try {
+				new ServerListener(new ServerSocket(listeningPort),ObjectBroker.broker,objectPool).start();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 
 			return ObjectBroker.broker;
 		}
-		
+
 		return null;
 	}
 }

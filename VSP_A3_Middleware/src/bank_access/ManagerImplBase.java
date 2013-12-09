@@ -15,9 +15,9 @@ public abstract class ManagerImplBase {
 		
 		for(Field f : ary)
 		{
-			switch(f.getName()){
-				case "Name" : name = f.toString();
-				case "Host" : host = f.toString();
+			switch(f.getName().toLowerCase()){
+				case "name" : name = f.toString();
+				case "host" : host = f.toString();
 				case "port" : port = Integer.parseInt(f.toString());
 			}
 		}

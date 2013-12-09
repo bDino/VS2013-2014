@@ -26,9 +26,9 @@ public class GlobalNameService {
 		}
 		
 		try {
-			//TODO: Frage: Warum muss hier immer wieder ein neues Socket erstellt werden?
+			socket = new ServerSocket(listenPort);
+			
 			while (running) {
-				socket = new ServerSocket(listenPort);
 				new Dispatcher(socket.accept(),objectPool).start();
 			}
 		} catch (IOException e) {
@@ -37,6 +37,6 @@ public class GlobalNameService {
 
 	}
 
-	public void shutdown() { this.running = false; }
+	public static void shutdown() { running = false; }
 
 }

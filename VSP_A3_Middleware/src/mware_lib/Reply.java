@@ -17,23 +17,19 @@ public class Reply implements Serializable{
 	
 	public Object getObject()
 	{
-		return (isSuccess() ? message[1] : null);
+		return (!isInvalid() ? message[1] : null);
 	}
-	
-	private boolean isSuccess()
-	{
-		return message[message.length -1].equalsIgnoreCase("success");
-	}
+
 	
 	public boolean isInvalid()
 	{
-		return !isSuccess();
+		return !message[message.length -1].equalsIgnoreCase("success");
 	}
 	
 	public Exception getException()
 	{
 		//TODO: wenn es nicht erfolgreich ist muss die exception gegeben werden oder? also andersrum...
-		return (isSuccess() == false ? null : new Exception(message[4]));
+		return (isInvalid() == true ? null : new Exception(message[4]));
 	}
 	
 }

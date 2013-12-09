@@ -35,7 +35,7 @@ public class Dispatcher extends Thread {
 		}
 	}
 
-	private void handleRequest(String request) {
+	synchronized void handleRequest(String request) {
 		String[] requestAry = request.split("|");
 		Object answer = null;
 
@@ -43,7 +43,7 @@ public class Dispatcher extends Thread {
 		case "resolve":
 			answer = objectPool.resolve(requestAry[3]);
 			try {
-				socket.getOutputStream().write(("REPLY|" + requestAry[2].toString() + "|" + answer).getBytes());
+				socket.getOutputStream().write((requestAry[2].toString() + "|" + answer).getBytes());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

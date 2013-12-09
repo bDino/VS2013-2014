@@ -39,6 +39,7 @@ public class TransactionImpl extends TransactionImplBase {
 		
 		Object[] args = new Object[]{accountId, amount};
 		Class[] classes = new Class[]{String.class, double.class};
+		
 		Reply reply = commModule.invokeRemoteMethod("ManagerImplBase|createAccount|"+args+"|"+classes);
 		
 		if(reply.isInvalid()){
@@ -54,6 +55,7 @@ public class TransactionImpl extends TransactionImplBase {
 			throws InvalidParamException {
 		Object[] args = new Object[]{accountId};
 		Class[] classes = new Class[]{String.class};
+		
 		Reply reply = commModule.invokeRemoteMethod("ManagerImplBase|createAccount|"+args+"|"+classes);
 		
 		if(reply.isInvalid())
