@@ -21,6 +21,8 @@ public class AccountImpl extends AccountImplBase {
 	public void transfer(double amount) throws OverdraftException {
 		Reply answer = cMoudule.invokeRemoteMethod("AccountImplBase|transfer|" + amount + "|");
 		
+		if(getBalance() < amount) throw new OverdraftException("Balance is lower then the amount");
+		
 		if(answer.isInvalid()) throw new RuntimeException(answer.getException().getMessage());
 	}
 
