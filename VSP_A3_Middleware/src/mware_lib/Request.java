@@ -8,7 +8,6 @@ public class Request implements Serializable{
 	 * 
 	 */
 	 static final long serialVersionUID = 8831534801757565521L;
-	 String className;
 	 String objectName;
 	 String methodName;
 	 Object[] ary;
@@ -16,9 +15,8 @@ public class Request implements Serializable{
 	 Class<?>[] paramClassAry;
 	 String successError;
 	
-	public Request(String className,String objectName, String methodName, Object[] paramAry, Class<?>[] paramClassAry, Exception ex)
+	public Request(String objectName, String methodName, Object[] paramAry, Class<?>[] paramClassAry)
 	{
-		this.className = className;
 		this.objectName = objectName;
 		this.methodName = methodName;
 		this.paramAry = paramAry;
@@ -29,10 +27,6 @@ public class Request implements Serializable{
 	public byte[] toSerialized()
 	{
 		return (objectName + "|" + methodName + "|" + paramAry + "|" + paramClassAry).getBytes();
-	}
-
-	public String getClassName() {
-		return className;
 	}
 
 	public String getObjectName() {
