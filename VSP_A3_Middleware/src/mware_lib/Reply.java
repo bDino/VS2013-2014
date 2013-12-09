@@ -17,7 +17,7 @@ public class Reply implements Serializable{
 	
 	public Object getObject()
 	{
-		return (isSuccess() == true ? message[1] : null);
+		return (isSuccess() ? message[1] : null);
 	}
 	
 	private boolean isSuccess()
@@ -32,6 +32,7 @@ public class Reply implements Serializable{
 	
 	public Exception getException()
 	{
+		//TODO: wenn es nicht erfolgreich ist muss die exception gegeben werden oder? also andersrum...
 		return (isSuccess() == false ? null : new Exception(message[4]));
 	}
 	

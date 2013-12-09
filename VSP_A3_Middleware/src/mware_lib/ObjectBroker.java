@@ -6,15 +6,15 @@ package mware_lib;
  */
 public class ObjectBroker {
 	
-	private static String serviceName;
-	private static int port;
+	private static String nameServiceName;
+	private static int nameServicePort;
 	private static ObjectBroker broker = null;
-	private static NameService nameService;
+	private static NameServiceImplBase nameService;
 	
 	/**
 	 * @return an Implementation for a local NameService
 	 */
-	public NameService getNameService() 
+	public NameServiceImplBase getNameService() 
 	{
 		return nameService;
 	}
@@ -40,10 +40,10 @@ public class ObjectBroker {
 	{
 		if(!Argument.checkArgument(serviceName) && !Argument.checkArgument(port))
 		{
-			ObjectBroker.serviceName = serviceName;
-			ObjectBroker.port = port;
+			ObjectBroker.nameServiceName = serviceName;
+			ObjectBroker.nameServicePort = port;
 			ObjectBroker.broker = (ObjectBroker.broker == null ? new ObjectBroker() : ObjectBroker.broker);
-			nameService =  new NameServiceImplBase(serviceName,port);
+			//nameService =  (NameServiceImplBase) new NameServiceImpl(serviceName,port);
 
 			return ObjectBroker.broker;
 		}

@@ -21,7 +21,7 @@ public class AccountImpl extends AccountImplBase {
 	public void transfer(double amount) throws OverdraftException {
 		Reply answer = cMoudule.invokeRemoteMethod("AccountImplBase|transfer|" + amount + "|");
 		
-		if(answer.isInvalid()) throw new OverdraftException(answer.getException().getMessage());
+		if(answer.isInvalid()) throw new RuntimeException(answer.getException().getMessage());
 	}
 
 	@Override
@@ -29,9 +29,9 @@ public class AccountImpl extends AccountImplBase {
 		Reply answer = cMoudule.invokeRemoteMethod("AccountImplBase|getBalance");
 		
 		if(answer.isInvalid()) {
-			return 0;//TODO
-		}else
-		{
+			throw new RuntimeException(answer.getException().getMessage());
+		}
+		else {
 			return Double.parseDouble(answer.getObject().toString());
 		}
 	}
