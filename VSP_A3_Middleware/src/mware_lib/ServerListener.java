@@ -53,8 +53,8 @@ class WorkerThread extends Thread {
 			String params = request[3];
 			Object s = objectPool.getLocalSkeleton(name);
 			
-			Method method = s.getClass().getMethod(methodName, params.split(";"));
-			method.
+			//Method method = s.getClass().getMethod(methodName, params.split(";"));
+			//method.
 			
 		} catch (IOException e) {
 			e.printStackTrace();

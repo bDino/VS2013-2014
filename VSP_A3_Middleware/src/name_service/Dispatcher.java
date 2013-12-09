@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 
+//CommunikationFormat: [ClassName|ObjectName|ObjectMethod|MethodParamObjectArray|ParamClassArray|SUCCESS/ERROR]
+
 /*
  * 
  */
@@ -49,7 +51,7 @@ public class Dispatcher extends Thread {
 			}
 
 		case "rebind":
-			objectPool.rebind(requestAry[3], requestAry[1], socket);
+			objectPool.rebind(requestAry[2], socket);
 		}
 
 	}

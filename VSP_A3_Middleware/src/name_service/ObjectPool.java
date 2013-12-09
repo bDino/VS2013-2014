@@ -10,10 +10,10 @@ public class ObjectPool {
 	
 	public ObjectPool(){}
 	
-	public synchronized void rebind(String name,Object stub, Socket socket)
+	public synchronized void rebind(String name, Socket socket)
 	{
-		System.out.println("rebind called: \nName: " + name + "\nStub: " + stub.toString() + "\nSocket: "+ socket.toString());
-		stubs.put(name, new Reference(socket.getInetAddress().getHostName(), socket.getPort(),stub));
+		System.out.println("rebind called: \nName: " + name + "\nStub: " + "\nSocket: "+ socket.toString());
+		stubs.put(name, new Reference(socket.getInetAddress().getHostName(), socket.getPort()));
 	}
 	
 	public synchronized Object resolve(String name)
@@ -29,12 +29,10 @@ public class ObjectPool {
 	private class Reference {
 		String hostname;
 		int port;
-		Object stub;
-		
-		public Reference(String hostname, int port,Object stub) {
+
+		public Reference(String hostname, int port) {
 			this.hostname = hostname;
 			this.port = port;
-			this.stub = stub;
 		}
 	}
 	

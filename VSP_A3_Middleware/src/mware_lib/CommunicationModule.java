@@ -23,27 +23,6 @@ public class CommunicationModule {
 		
 	}
 	
-	public Reply invokeRemoteMethod(String msg)
-	{
-		Reply reply;
-		try {
-			socket = new Socket(hostname, port);
-			OutputStream output = socket.getOutputStream();
-			reader = new BufferedReader(new InputStreamReader(
-					socket.getInputStream()));
-			output.write(msg.getBytes());
-			
-			reply = new Reply(reader.readLine()); 
-			socket.close();
-			
-		} catch (UnknownHostException e) {
-			reply = new Reply("||||"+e.getMessage());
-			//e.printStackTrace();
-		} catch (IOException e) {
-			reply = new Reply("||||"+e.getMessage());
-			//e.printStackTrace();
-		}
-		return reply;
-	}
+
 	
 }

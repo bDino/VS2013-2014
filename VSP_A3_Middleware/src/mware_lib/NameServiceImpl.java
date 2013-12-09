@@ -39,9 +39,7 @@ public class NameServiceImpl extends NameServiceImplBase {
 		if (this.socket == null || this.socket.isClosed()) {
 			try {
 				initializeConnection();
-				out.write(new RequestResponseProtocoll(servant.getClass()
-						.getName(), name, "", new Object[0], new Class<?>[0],
-						null).toSerialized());
+				out.write(("rebind|"+servant.getClass().getName() + "|" + name).getBytes());
 				socket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -53,7 +51,7 @@ public class NameServiceImpl extends NameServiceImplBase {
 	@Override
 	public Object resolve(String name) {
 		System.out.println("resolve called: - " + name);
-		Reply answer = null;
+		String[] answer = null;
 
 		if (this.socket == null || this.socket.isClosed()) {
 			try {
@@ -64,13 +62,13 @@ public class NameServiceImpl extends NameServiceImplBase {
 		}
 
 		try {
-			out.write(new RequestResponseProtocoll("Resolve|" + name)
-					.toSerialized());
-			answer = new Reply(bufferedReader.readLine());
+			out.write(("resolve|"+name).getBytes());
+			answer = bufferedReader.readLine().split("|");
+			socket.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return answer.getObject();
+		return new Stub(answer[0],answer[1],Integer.parseInt(answer[2]));
 	}
 
 	private void initializeConnection() throws UnknownHostException,
