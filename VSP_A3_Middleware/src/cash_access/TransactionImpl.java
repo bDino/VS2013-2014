@@ -2,6 +2,7 @@ package cash_access;
 
 import java.util.UUID;
 
+import mware_lib.Stub;
 import bank_access.OverdraftException;
 import mware_lib.CommunicationModule;
 import mware_lib.Reply;
@@ -9,16 +10,11 @@ import mware_lib.Reply;
 //TODO: Exceptions werfen...Overdraft!? das heißt wir müssen doch an den objekten was verändern?? ahhh...
 public class TransactionImpl extends TransactionImplBase {
 
-	String name;
-	String host;
-	int port;
-	CommunicationModule commModule;
 	
-	public TransactionImpl(String name, String host, int port){
-		this.name = name;
-		this.host = host;
-		this.port = port;
-		commModule = new CommunicationModule(host, port);
+	Stub stub;
+	
+	public TransactionImpl(Stub stub){
+		this.stub = stub;
 	}
 	
 	//TODO: invalidParamException!!!
@@ -29,7 +25,7 @@ public class TransactionImpl extends TransactionImplBase {
 		Object[] args = new Object[]{accountId, amount};
 		Class<?>[] classes = new Class[]{String.class, double.class};
 		Request request = new Request(name, "deposit", args, classes);
-		Reply reply = commModule.invokeRemoteMethod(request);
+		Reply reply = stub.delegateMethod(request);
 
 		if(reply.isInvalid()){
 			RuntimeException e = (RuntimeException) reply.getException();
@@ -46,8 +42,8 @@ public class TransactionImpl extends TransactionImplBase {
 		
 		Object[] args = new Object[]{accountId, amount};
 		Class<?>[] classes = new Class[]{String.class, double.class};
-		Request request = new Request(name, "withdraw", args, classes);
-		Reply reply = commModule.invokeRemoteMethod(request);
+		Request request = new Request(stub.objectName, "withdraw", args, classes);
+		Reply reply = stub.delegateMethod(request);
 		
 		if(reply.isInvalid()){
 			RuntimeException e = (RuntimeException) reply.getException();
@@ -63,8 +59,8 @@ public class TransactionImpl extends TransactionImplBase {
 			throws InvalidParamException {
 		Object[] args = new Object[]{accountId};
 		Class<?>[] classes = new Class[]{String.class};
-		Request request = new Request(name, "getBalance", args, classes);
-		Reply reply = commModule.invokeRemoteMethod(request);
+		Request request = new Request(stub.objectName, "getBalance", args, classes);
+		Reply reply = stub.delegateMethod(request);
 		
 		if(reply.isInvalid())
 		{
