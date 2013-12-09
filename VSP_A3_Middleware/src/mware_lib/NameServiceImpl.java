@@ -19,8 +19,9 @@ public class NameServiceImpl extends NameServiceImplBase {
 	OutputStream out;
 	BufferedReader bufferedReader;
 	LocalObjectPool objectPool;
-	
-	public NameServiceImpl(String serviceName, int port, LocalObjectPool objectPool) {
+
+	public NameServiceImpl(String serviceName, int port,
+			LocalObjectPool objectPool) {
 		this.globServiceName = serviceName;
 		this.globServicePort = port;
 		this.objectPool = objectPool;
@@ -38,8 +39,9 @@ public class NameServiceImpl extends NameServiceImplBase {
 		if (this.socket == null || this.socket.isClosed()) {
 			try {
 				initializeConnection();
-				out.write(new Request("Rebind|" + servant.getClass().getName() + "|"
-						+ name).toSerialized());
+				out.write(new RequestResponseProtocoll(servant.getClass()
+						.getName(), name, "", new Object[0], new Class<?>[0],
+						null).toSerialized());
 				socket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -62,7 +64,8 @@ public class NameServiceImpl extends NameServiceImplBase {
 		}
 
 		try {
-			out.write(new Request("Resolve|" + name).toSerialized());
+			out.write(new RequestResponseProtocoll("Resolve|" + name)
+					.toSerialized());
 			answer = new Reply(bufferedReader.readLine());
 		} catch (IOException e) {
 			e.printStackTrace();

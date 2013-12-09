@@ -31,7 +31,7 @@ public class ServerListener extends Thread {
 		}
 	}
 
-}
+
 
 class WorkerThread extends Thread {
 	Socket socket;
@@ -49,12 +49,18 @@ class WorkerThread extends Thread {
 
 			String[] request = reader.readLine().split("|");
 			String name = request[1];
+			String methodName = request[2];
+			String params = request[3];
+			Object s = objectPool.getLocalSkeleton(name);
 			
-			Object localObject = 
-
+			Method method = s.getClass().getMethod(methodName, params.split(";"));
+			method.
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
 	}
+}
+
 }
