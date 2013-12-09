@@ -2,6 +2,7 @@ package bank_access;
 
 import mware_lib.CommunicationModule;
 import mware_lib.Reply;
+import mware_lib.Request;
 
 public class AccountImpl extends AccountImplBase {
 
@@ -19,16 +20,20 @@ public class AccountImpl extends AccountImplBase {
 	
 	@Override
 	public void transfer(double amount) throws OverdraftException {
-		Reply answer = cMoudule.invokeRemoteMethod("AccountImplBase|transfer|" + amount + "|");
-		
 		if(getBalance() < amount) throw new OverdraftException("Balance is lower then the amount");
+		
+		Object[] args = new Object[]{amount};
+		Class<?>[] classes = new Class[]{double.class};
+		Request request = new Request(name, "transfer", args, classes);
+		Reply answer = cMoudule.invokeRemoteMethod(request);
 		
 		if(answer.isInvalid()) throw new RuntimeException(answer.getException().getMessage());
 	}
 
 	@Override
 	public double getBalance() {
-		Reply answer = cMoudule.invokeRemoteMethod("AccountImplBase|getBalance");
+		Request request = new Request(name, "getBalance", new Object[]{}, new Class<?>[]{});
+		Reply answer = cMoudule.invokeRemoteMethod(request);
 		
 		if(answer.isInvalid()) {
 			throw new RuntimeException(answer.getException().getMessage());
