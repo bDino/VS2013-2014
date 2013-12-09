@@ -1,11 +1,8 @@
 package cash_access;
 
-import java.util.UUID;
-
-import mware_lib.Stub;
-import mware_lib.CommunicationModule;
 import mware_lib.Reply;
 import mware_lib.Request;
+import mware_lib.Stub;
 
 //TODO: Exceptions werfen...Overdraft!? das heißt wir müssen doch an den objekten was verändern?? ahhh...
 public class TransactionImpl extends TransactionImplBase {
@@ -24,7 +21,7 @@ public class TransactionImpl extends TransactionImplBase {
 		
 		Object[] args = new Object[]{accountId, amount};
 		Class<?>[] classes = new Class[]{String.class, double.class};
-		Request request = new Request(name, "deposit", args, classes);
+		Request request = new Request(stub.objectName, "deposit", args, classes);
 		Reply reply = stub.delegateMethod(request);
 
 		if(reply.isInvalid()){

@@ -2,30 +2,24 @@ package bank_access;
 
 
 
-import mware_lib.CommunicationModule;
 import mware_lib.Reply;
 import mware_lib.Request;
+import mware_lib.Stub;
 
 public class ManagerImpl extends ManagerImplBase{
 
-	String name;
-	String host;
-	int port;
-	CommunicationModule commModule;
+	Stub stub;
 	
-	public ManagerImpl(String name,String host, int port){
-		this.name = name;
-		this.host = host;
-		this.port = port;
-		commModule = new CommunicationModule(host, port);
+	public ManagerImpl(Stub stub){
+		this.stub = stub;
 	}
 	@Override
 	public String createAccount(String owner, String branch) {
 		Object[] args = new Object[]{owner, branch};
-		Class[] classes = new Class[]{String.class, String.class};
+		Class<?>[] classes = new Class[]{String.class, String.class};
 		
-		Request request = new Request(name, "createAccount", args, classes);
-		Reply reply = commModule.invokeRemoteMethod(request);
+		Request request = new Request(stub.objectName, "createAccount", args, classes);
+		Reply reply = stub.delegateMethod(request);
 		
 		if(reply.isInvalid()){
 			RuntimeException e = (RuntimeException) reply.getException();

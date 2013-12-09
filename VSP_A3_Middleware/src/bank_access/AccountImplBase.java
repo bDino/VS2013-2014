@@ -9,8 +9,11 @@ public abstract class AccountImplBase {
 	
 	public abstract double getBalance();
 	
-	public static AccountImplBase narrow_cast(Object o) 
+	//TODO: Exception werfen!
+	public static AccountImplBase narrow_cast(Object gor) 
 	{
-		return (AccountImplBase) new AccountImpl((Stub) o);
+		if(gor instanceof Stub)
+			return (AccountImplBase) new AccountImpl((Stub) gor);
+		return null;
 	}
 }

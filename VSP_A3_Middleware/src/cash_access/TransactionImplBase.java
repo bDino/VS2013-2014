@@ -1,9 +1,6 @@
 package cash_access;
 
-import java.lang.reflect.Field;
-
-import bank_access.AccountImpl;
-import bank_access.AccountImplBase;
+import mware_lib.Stub;
 
 public abstract class TransactionImplBase {
 	public abstract void deposit(String accountId, double amount) throws InvalidParamException;
@@ -12,23 +9,12 @@ public abstract class TransactionImplBase {
 
 	public abstract double getBalance(String accountId) throws InvalidParamException;
 
-	public static TransactionImplBase narrow_cast(Object o) 
+	//TODO: Exception werfen!
+	public static TransactionImplBase narrow_cast(Object gor) 
 	{
-		String name = "";
-		String host = "";
-		int port = 0;
-		Field[] ary  = o.getClass().getFields();
-		
-		for(Field f : ary)
-		{
-			switch(f.getName()){
-				case "Name" : name = f.toString();
-				case "Host" : host = f.toString();
-				case "port" : port = Integer.parseInt(f.toString());
-			}
-		}
-		
-		return (TransactionImplBase) new TransactionImpl(host,port);
+		if(gor instanceof Stub)
+			return (TransactionImplBase) new TransactionImpl((Stub) gor);
+		return null;
 	}
 	
 }
