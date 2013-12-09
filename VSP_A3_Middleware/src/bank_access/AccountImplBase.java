@@ -1,6 +1,6 @@
 package bank_access;
 
-import java.lang.reflect.Field;
+import mware_lib.Stub;
 
 
 public abstract class AccountImplBase {
@@ -11,20 +11,6 @@ public abstract class AccountImplBase {
 	
 	public static AccountImplBase narrow_cast(Object o) 
 	{
-		String name = "";
-		String host = "";
-		int port = 0;
-		Field[] ary  = o.getClass().getFields();
-		
-		for(Field f : ary)
-		{
-			switch(f.getName()){
-				case "Name" : name = f.toString();
-				case "Host" : host = f.toString();
-				case "port" : port = Integer.parseInt(f.toString());
-			}
-		}
-		
 		return (AccountImplBase) new AccountImpl((Stub) o);
 	}
 }
