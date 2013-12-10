@@ -48,7 +48,10 @@ public class ServerListener extends Thread {
 			try {
 				ObjectInputStream reader = new ObjectInputStream(
 						socket.getInputStream());
-
+				
+				System.out.println("ServerListener got Request\n");
+				
+				
 				Request request = (Request) reader.readObject();
 				String name = request.getObjectName();
 				String methodName = request.getMethodName();

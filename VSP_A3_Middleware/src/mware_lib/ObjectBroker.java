@@ -52,7 +52,7 @@ public class ObjectBroker {
 			try {
 				new ServerListener(new ServerSocket(listeningPort),ObjectBroker.broker,objectPool).start();
 			} catch (IOException e) {
-				System.out.println("Error initializing the ObjectBroker");
+				System.out.println("Error initializing the ObjectBroker\n" + e.getMessage());
 			}
 
 			return ObjectBroker.broker;

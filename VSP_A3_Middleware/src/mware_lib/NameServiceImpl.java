@@ -48,8 +48,8 @@ public class NameServiceImpl extends NameServiceImplBase
 				System.out.println(answerReader.readLine());
 				closeAllConnections();
 			} catch (IOException e) {
-				closeAllConnections();
 				e.printStackTrace();
+				closeAllConnections();
 			}
 		}
 
@@ -65,8 +65,8 @@ public class NameServiceImpl extends NameServiceImplBase
 			try {
 				initializeConnection();
 			} catch (IOException e) {
-				closeAllConnections();
 				e.printStackTrace();
+				closeAllConnections();
 			}
 		}
 
@@ -76,6 +76,7 @@ public class NameServiceImpl extends NameServiceImplBase
 			closeAllConnections();
 		} catch (IOException e) {
 			e.printStackTrace();
+			closeAllConnections();
 		}
 		return new Stub(answer[0],answer[1],Integer.parseInt(answer[2]));
 	}
