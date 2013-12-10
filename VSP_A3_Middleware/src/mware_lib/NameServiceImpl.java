@@ -16,7 +16,7 @@ public class NameServiceImpl extends NameServiceImplBase
 	Socket socket = null;
 	InputStreamReader in;
 	OutputStream out;
-	BufferedReader bufferedReader;
+	BufferedReader answerReader;
 	LocalObjectPool objectPool;
 
 	public NameServiceImpl(String serviceName, int port, LocalObjectPool objectPool) 
@@ -31,21 +31,21 @@ public class NameServiceImpl extends NameServiceImplBase
 		socket = new Socket(this.gnsServiceName, this.gnsPort);
 		in = new InputStreamReader(socket.getInputStream());
 		out = socket.getOutputStream();
-		bufferedReader = new BufferedReader(in);
+		answerReader = new BufferedReader(in);
 	}
 
 	@Override
 	public void rebind(Object servant, String name) 
 	{
-		System.out.println("rebind called: " + servant.getClass().getSimpleName() + " - "
+		System.out.println("NameServie rebind called: " + servant.getClass().getSimpleName() + " - "
 				+ name);
 		objectPool.rebindLocalSkeleton(name, servant);
 
 		if (this.socket == null || this.socket.isClosed()) {
 			try {
 				initializeConnection();
-				out.write(("rebind|"+servant.getClass().getName() + "|" + name + "\n").getBytes());
-				System.out.println(bufferedReader.readLine());
+				out.write(("rebind" + "#" + servant.getClass().getName() + "#" + name + "\n").getBytes());
+				System.out.println(answerReader.readLine());
 				closeAllConnections();
 			} catch (IOException e) {
 				closeAllConnections();
@@ -58,7 +58,7 @@ public class NameServiceImpl extends NameServiceImplBase
 	@Override
 	public Object resolve(String name)
 	{
-		System.out.println("resolve called: - " + name);
+		System.out.println("NameService resolve called: - " + name);
 		String[] answer = null;
 
 		if (this.socket == null || this.socket.isClosed()) {
@@ -71,8 +71,8 @@ public class NameServiceImpl extends NameServiceImplBase
 		}
 
 		try {
-			out.write(("resolve|"+name + "\n").getBytes());
-			answer = bufferedReader.readLine().split("|");
+			out.write(("resolve#"+name + "\n").getBytes());
+			answer = answerReader.readLine().split("#");
 			closeAllConnections();
 		} catch (IOException e) {
 			e.printStackTrace();

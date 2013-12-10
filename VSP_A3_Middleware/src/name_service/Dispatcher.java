@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.Arrays;
 
 //CommunikationFormat: [ClassName|ObjectName|ObjectMethod|MethodParamObjectArray|ParamClassArray|SUCCESS/ERROR]
 
@@ -33,22 +34,27 @@ public class Dispatcher extends Thread {
 		try {
 			reader = new BufferedReader(new InputStreamReader(
 					socket.getInputStream()));
-			handleRequest(reader.readLine());
+			handleRequest(reader.readLine().replace(",",""));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
 	synchronized void handleRequest(String request) {
-		String[] requestAry = request.split("|");
+		String[] requestAry = request.split("#");
 		Object answer = null;
 		try {
-			switch (requestAry[2]) {
+			
+			System.out.println("Dispatcher Request:\n" + Arrays.deepToString(requestAry));
+			
+			switch (requestAry[0]) {
 			case "resolve":
-				answer = objectPool.resolve(requestAry[3]);
-				socket.getOutputStream().write((requestAry[2].toString() + "|" + answer + "\n").getBytes());
+				System.out.println("resolve called in Dispatcher\n");
+				answer = objectPool.resolve(requestAry[1]);
+				socket.getOutputStream().write((requestAry[1].toString() + "#" + answer + "\n").getBytes());
 			
 			case "rebind":
+				System.out.println("rebind called in Dispatcher\n");
 				boolean result = objectPool.rebind(requestAry[2], socket);
 				if(result) socket.getOutputStream().write(("Success" + "\n").getBytes()) ;
 				else socket.getOutputStream().write(("Error" + "\n").getBytes());
