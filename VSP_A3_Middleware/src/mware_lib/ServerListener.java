@@ -9,7 +9,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class ServerListener extends Thread {
-	ServerSocket socket;
+	ServerSocket serverSocket;
 	String nsName;
 	int nsPort;
 	ObjectBroker broker;
@@ -17,7 +17,7 @@ public class ServerListener extends Thread {
 
 	public ServerListener(ServerSocket socket, ObjectBroker broker,
 			LocalObjectPool objPool) {
-		this.socket = socket;
+		this.serverSocket = socket;
 		this.broker = broker;
 		this.objectPool = objPool;
 	}
@@ -27,8 +27,8 @@ public class ServerListener extends Thread {
 		while (ObjectBroker.running) {
 			try {
 				System.out.println("ServerListener started on Port: "
-						+ socket.getLocalPort());
-				new WorkerThread(socket.accept()).start();
+						+ serverSocket.getLocalPort());
+				new WorkerThread(serverSocket.accept()).start();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -69,7 +69,6 @@ public class ServerListener extends Thread {
 				
 				reader.close();
 				out.close();
-				socket.close();
 			} catch (IOException e) { e.printStackTrace();
 			} catch (ClassNotFoundException e) { e.printStackTrace();
 			} catch (NoSuchMethodException e) { e.printStackTrace();	

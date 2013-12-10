@@ -1,6 +1,5 @@
 package name_service;
 
-import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,11 +9,11 @@ public class ObjectPool {
 	
 	public ObjectPool(){}
 	
-	public synchronized boolean rebind(String name, Socket socket)
+	public synchronized boolean rebind(String name,String hostName,int port)
 	{
-		System.out.println("rebind in gns called: \nName: " + name + "\nStub: " + "\nSocket: "+ socket.toString());
+		System.out.println("rebind in gns called: \nName: " + name + "\nStub: " + "\nSocket: "+ hostName);
 		if(references.containsKey(name)) return false;
-		else references.put(name, new Reference(socket.getInetAddress().getHostName(), socket.getPort()));
+		else references.put(name, new Reference(hostName,port));
 		
 		return true;
 	}
@@ -23,7 +22,7 @@ public class ObjectPool {
 	{
 		System.out.println("resolve in gns called: \nName: " + name);
 		Reference ref = references.get(name);
-		return (ref.hostname + "#" + ref.port);
+		return (ref.hostname + "#" + ref.port).toString();
 	}
 	
 	

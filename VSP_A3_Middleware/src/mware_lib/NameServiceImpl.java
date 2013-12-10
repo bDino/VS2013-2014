@@ -13,17 +13,21 @@ public class NameServiceImpl extends NameServiceImplBase
 
 	String gnsServiceName;
 	int gnsPort;
+	int serverListenerPort;
+	String serverListenerHost;
 	Socket socket = null;
 	InputStreamReader in;
 	OutputStream out;
 	BufferedReader answerReader;
 	LocalObjectPool objectPool;
 
-	public NameServiceImpl(String serviceName, int port, LocalObjectPool objectPool) 
+	public NameServiceImpl(String serviceName, int port, LocalObjectPool objectPool, int serverListenerPort, String serverListenerHost) 
 	{
 		this.gnsServiceName = serviceName;
 		this.gnsPort = port;
 		this.objectPool = objectPool;
+		this.serverListenerPort = serverListenerPort;
+		this.serverListenerHost = serverListenerHost;
 	}
 	
 	private void initializeConnection() throws UnknownHostException,IOException 
@@ -44,7 +48,8 @@ public class NameServiceImpl extends NameServiceImplBase
 		if (this.socket == null || this.socket.isClosed()) {
 			try {
 				initializeConnection();
-				out.write(("rebind" + "#" + servant.getClass().getSimpleName() + "#" + name + "\n").getBytes());
+				out.write(("rebind" + "#" + servant.getClass().getSimpleName() + "#" + name + "#" 
+						+ serverListenerHost + "#" + serverListenerPort + "\n").getBytes());
 				System.out.println(answerReader.readLine());
 				closeAllConnections();
 			} catch (IOException e) {
@@ -78,7 +83,7 @@ public class NameServiceImpl extends NameServiceImplBase
 			e.printStackTrace();
 			closeAllConnections();
 		}
-		return new Stub(name,answer[0],Integer.parseInt(answer[1]));
+		return new Stub(name,answer[1],Integer.parseInt(answer[2]));
 	}
 
 	public void closeAllConnections() 

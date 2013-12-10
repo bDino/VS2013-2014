@@ -42,7 +42,6 @@ public class Dispatcher extends Thread {
 
 	synchronized void handleRequest(String request) {
 		String[] requestAry = request.split("#");
-		Object answer = null;
 		try {
 			
 			System.out.println("Dispatcher Request:\n" + Arrays.deepToString(requestAry));
@@ -50,12 +49,11 @@ public class Dispatcher extends Thread {
 			switch (requestAry[0]) {
 			case "resolve":
 				System.out.println("resolve called in Dispatcher\n");
-				answer = objectPool.resolve(requestAry[1]);
-				socket.getOutputStream().write((requestAry[1].toString() + "#" + answer + "\n").getBytes());
+				socket.getOutputStream().write((requestAry[1].toString() + "#" + objectPool.resolve(requestAry[1]) + "\n").getBytes());
 			break;
 			case "rebind":
 				System.out.println("rebind called in Dispatcher\nRequestAry: " + Arrays.deepToString(requestAry));
-				boolean result = objectPool.rebind(requestAry[2], socket);
+				boolean result = objectPool.rebind(requestAry[2], requestAry[3], Integer.parseInt(requestAry[4]));
 				if(result) socket.getOutputStream().write(("Success" + "\n").getBytes()) ;
 				else socket.getOutputStream().write(("Error" + "\n").getBytes());
 			break;
