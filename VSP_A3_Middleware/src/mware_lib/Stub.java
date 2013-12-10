@@ -23,13 +23,16 @@ public class Stub {
 		Reply reply;
 		try {
 			Socket socket = new Socket(host, port);
-			ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
+			ObjectOutputStream writer = new ObjectOutputStream(socket.getOutputStream());
+			
+			writer.writeObject(request);
+			writer.flush();
+			
 			ObjectInputStream reader = new ObjectInputStream(socket.getInputStream());
-			
-			output.writeObject(request);
-			
 			reply = (Reply) reader.readObject();
 			socket.close();
+			
+			System.out.println("Stub Successfull invoked Method with Result: " + reply.getMessage());
 			
 		} catch (UnknownHostException e) {
 			reply = new Reply("",null,e);

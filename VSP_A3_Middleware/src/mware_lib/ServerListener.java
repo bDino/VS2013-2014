@@ -46,6 +46,8 @@ public class ServerListener extends Thread {
 		public void run() {
 			System.out.println("ServerListenerThread running....");
 			try {
+				ObjectOutputStream writer = new ObjectOutputStream(socket.getOutputStream());
+				writer.flush();
 				ObjectInputStream reader = new ObjectInputStream(
 						socket.getInputStream());
 				
@@ -61,14 +63,16 @@ public class ServerListener extends Thread {
 				Object s = objectPool.getLocalSkeleton(name);
 
 				Method method = s.getClass().getMethod(methodName, classParam);
+				method.setAccessible(true);
 				Object result = method.invoke(s, params);
 
-				System.out.println("Method " + methodName + " successfully invoked on Object " + name);
-				ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-				out.writeObject(new Reply("Success",result,null));
+				writer.writeObject(new Reply("Success",result,null));
+				writer.flush();
 				
+				System.out.println("Method " + methodName + " successfully invoked on Object " + name);
+								
 				reader.close();
-				out.close();
+				writer.close();
 			} catch (IOException e) { e.printStackTrace();
 			} catch (ClassNotFoundException e) { e.printStackTrace();
 			} catch (NoSuchMethodException e) { e.printStackTrace();	
