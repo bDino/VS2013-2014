@@ -23,19 +23,21 @@ public class GlobalNameService {
 			catch(NumberFormatException ex){
 				listenPort = defaultPort;
 			}
-		}
+		}else listenPort = defaultPort;
+	
 		
 		try {
 			socket = new ServerSocket(listenPort);
 			
 			while (running) {
+				System.out.println("Global NS Running on Port: " + listenPort);
 				new Dispatcher(socket.accept(),objectPool).start();
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println("Failed running ObjectBroker" + "\n" + e.getMessage());
 		}
 
-	}
+		}
 
 	public static void shutdown() { running = false; }
 

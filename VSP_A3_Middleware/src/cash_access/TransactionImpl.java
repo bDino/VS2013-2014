@@ -52,8 +52,7 @@ public class TransactionImpl extends TransactionImplBase {
 
 	//TODO: invalidParamException!!!
 	@Override
-	public double getBalance(String accountId) 
-			throws InvalidParamException {
+	public double getBalance(String accountId) throws InvalidParamException {
 		Object[] args = new Object[]{accountId};
 		Class<?>[] classes = new Class[]{String.class};
 		Request request = new Request(stub.objectName, "getBalance", args, classes);
@@ -66,7 +65,7 @@ public class TransactionImpl extends TransactionImplBase {
 		}
 		else
 		{
-			double value = (double) reply.getObject();
+			double value = Double.parseDouble(reply.getMessage());
 			return value;
 		}
 	}

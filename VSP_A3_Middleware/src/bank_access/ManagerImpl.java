@@ -26,7 +26,7 @@ public class ManagerImpl extends ManagerImplBase{
 			throw e;
 		}
 		else {
-			return reply.getObject().toString();
+			return reply.getMessage();
 		}
 	}
 

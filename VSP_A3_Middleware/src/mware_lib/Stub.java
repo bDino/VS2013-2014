@@ -32,11 +32,11 @@ public class Stub {
 			socket.close();
 			
 		} catch (UnknownHostException e) {
-			reply = new Reply("",e);
+			reply = new Reply("",null,e);
 		} catch (IOException e) {
-			reply = new Reply("",e);
+			reply = new Reply("",null,e);
 		} catch(ClassNotFoundException e){
-			reply = new Reply("",e);
+			reply = new Reply("",null,e);
 		}
 		
 		return reply;

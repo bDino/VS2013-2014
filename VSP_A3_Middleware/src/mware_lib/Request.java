@@ -8,12 +8,12 @@ public class Request implements Serializable{
 	 * 
 	 */
 	 static final long serialVersionUID = 8831534801757565521L;
-	 String objectName;
-	 String methodName;
-	 Object[] ary;
-	 Object[] paramAry;
-	 Class<?>[] paramClassAry;
-	 String successError;
+	 private String objectName;
+	 private String methodName;
+	 private Object[] ary;
+	 private Object[] paramAry;
+	 private Class<?>[] paramClassAry;
+	 private String successError;
 	
 	public Request(String objectName, String methodName, Object[] paramAry, Class<?>[] paramClassAry)
 	{

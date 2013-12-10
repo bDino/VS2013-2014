@@ -8,29 +8,34 @@ public class Reply implements Serializable{
 	 * Auto generated
 	 */
 	private static final long serialVersionUID = -1732696400448770987L;
-	private String[] message;
+	private String answer;
 	Exception exception;
-
+	Object result;
 	
-	public Reply(String msg, Exception e)
+	public Reply(String msg,Object result, Exception e)
 	{
-		message = msg.split("|");
-		exception = e;
+		this.answer = msg;
+		this.result = result;
+		this.exception = e;
 	}
 	
-	public Object getObject()
+	public String getMessage()
 	{
-		return (!isInvalid() ? message[1] : null);
+		return answer;
+	}
+	
+	public Object getMethodResult()
+	{
+		return this.result;
 	}
 
 	public boolean isInvalid()
 	{
-		return !message[message.length -1].equalsIgnoreCase("success");
+		return exception.equals(null);
 	}
 	
 	public Exception getException()
 	{
-		return (isInvalid() == true ? null : new Exception(message[4]));
-	}
-	
+		return exception;
+	}	
 }

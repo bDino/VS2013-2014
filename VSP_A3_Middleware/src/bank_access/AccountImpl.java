@@ -35,7 +35,7 @@ public class AccountImpl extends AccountImplBase {
 		if (answer.isInvalid()) {
 			throw new RuntimeException(answer.getException().getMessage());
 		} else {
-			return Double.parseDouble(answer.getObject().toString());
+			return Double.parseDouble(answer.getMessage());
 		}
 	}
 

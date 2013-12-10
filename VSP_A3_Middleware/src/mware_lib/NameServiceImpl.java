@@ -8,38 +8,47 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 // CommunikationFormat: [ClassType|ObjectName|ObjectMethod|MethodParamObjectArray|ParamClassArray|SUCCESS/ERROR]
-public class NameServiceImpl extends NameServiceImplBase {
+public class NameServiceImpl extends NameServiceImplBase 
+{
 
-	String globServiceName;
-	int globServicePort;
+	String gnsServiceName;
+	int gnsPort;
 	Socket socket = null;
 	InputStreamReader in;
 	OutputStream out;
 	BufferedReader bufferedReader;
 	LocalObjectPool objectPool;
 
-	public NameServiceImpl(String serviceName, int port,
-			LocalObjectPool objectPool) {
-		this.globServiceName = serviceName;
-		this.globServicePort = port;
+	public NameServiceImpl(String serviceName, int port, LocalObjectPool objectPool) 
+	{
+		this.gnsServiceName = serviceName;
+		this.gnsPort = port;
 		this.objectPool = objectPool;
+	}
+	
+	private void initializeConnection() throws UnknownHostException,IOException 
+	{
+		socket = new Socket(this.gnsServiceName, this.gnsPort);
+		in = new InputStreamReader(socket.getInputStream());
+		out = socket.getOutputStream();
+		bufferedReader = new BufferedReader(in);
 	}
 
 	@Override
-	public void rebind(Object servant, String name) {
-		System.out.println("rebind called: " + servant.toString() + " - "
+	public void rebind(Object servant, String name) 
+	{
+		System.out.println("rebind called: " + servant.getClass().getSimpleName() + " - "
 				+ name);
 		objectPool.rebindLocalSkeleton(name, servant);
-		// TODO: sollte das socket nicht immer wieder geschlossen und neu
-		// geöffnet werden?
-		// dann würde sich diese abfrage erübrigen. im resolve steht die alte
-		// version
+
 		if (this.socket == null || this.socket.isClosed()) {
 			try {
 				initializeConnection();
-				out.write(("rebind|"+servant.getClass().getName() + "|" + name).getBytes());
-				socket.close();
+				out.write(("rebind|"+servant.getClass().getName() + "|" + name + "\n").getBytes());
+				System.out.println(bufferedReader.readLine());
+				closeAllConnections();
 			} catch (IOException e) {
+				closeAllConnections();
 				e.printStackTrace();
 			}
 		}
@@ -47,7 +56,8 @@ public class NameServiceImpl extends NameServiceImplBase {
 	}
 
 	@Override
-	public Object resolve(String name) {
+	public Object resolve(String name)
+	{
 		System.out.println("resolve called: - " + name);
 		String[] answer = null;
 
@@ -55,36 +65,29 @@ public class NameServiceImpl extends NameServiceImplBase {
 			try {
 				initializeConnection();
 			} catch (IOException e) {
+				closeAllConnections();
 				e.printStackTrace();
 			}
 		}
 
 		try {
-			out.write(("resolve|"+name).getBytes());
+			out.write(("resolve|"+name + "\n").getBytes());
 			answer = bufferedReader.readLine().split("|");
-			socket.close();
+			closeAllConnections();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return new Stub(answer[0],answer[1],Integer.parseInt(answer[2]));
 	}
 
-	private void initializeConnection() throws UnknownHostException,
-			IOException {
-		socket = new Socket(this.globServiceName, this.globServicePort);
-		in = new InputStreamReader(socket.getInputStream());
-		out = socket.getOutputStream();
-		bufferedReader = new BufferedReader(in);
-	}
-
-	// TODO
-	public void close() {
+	public void closeAllConnections() 
+	{
 		try {
 			socket.close();
 			in.close();
 			out.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println("Error closing Connections: \n" + e.getMessage());
 		}
 
 	}

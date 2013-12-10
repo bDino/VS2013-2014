@@ -8,8 +8,8 @@ import java.net.ServerSocket;
  */
 public class ObjectBroker {
 
-	static String nameServiceName;
-	static int nameServicePort;
+	static String gnsName;
+	static int gnsPort;
 	static ObjectBroker broker = null;
 	static NameServiceImplBase nameService;
 	static int gNsPort = 16437;
@@ -41,10 +41,9 @@ public class ObjectBroker {
 	 * @return an ObjectBroker Interface to Nameservice
 	 */
 	public static ObjectBroker init(String serviceName, int port) {
-		if (!Argument.checkArgument(serviceName)
-				&& !Argument.checkArgument(port)) {
-			ObjectBroker.nameServiceName = serviceName;
-			ObjectBroker.nameServicePort = port;
+		if (serviceName != "" && port != 0) {
+			ObjectBroker.gnsName = serviceName;
+			ObjectBroker.gnsPort = port;
 			ObjectBroker.broker = (ObjectBroker.broker == null ? new ObjectBroker()
 					: ObjectBroker.broker);
 			nameService = (NameServiceImplBase) new NameServiceImpl(
@@ -53,7 +52,7 @@ public class ObjectBroker {
 			try {
 				new ServerListener(new ServerSocket(listeningPort),ObjectBroker.broker,objectPool).start();
 			} catch (IOException e) {
-				e.printStackTrace();
+				System.out.println("Error initializing the ObjectBroker");
 			}
 
 			return ObjectBroker.broker;

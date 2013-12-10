@@ -6,26 +6,26 @@ import java.util.Map;
 
 public class ObjectPool {
 
-	Map<String, Reference> stubs = new HashMap<String, Reference>();
+	Map<String, Reference> references = new HashMap<String, Reference>();
 	
 	public ObjectPool(){}
 	
-	public synchronized void rebind(String name, Socket socket)
+	public synchronized boolean rebind(String name, Socket socket)
 	{
-		System.out.println("rebind called: \nName: " + name + "\nStub: " + "\nSocket: "+ socket.toString());
-		stubs.put(name, new Reference(socket.getInetAddress().getHostName(), socket.getPort()));
+		System.out.println("rebind in gns called: \nName: " + name + "\nStub: " + "\nSocket: "+ socket.toString());
+		if(references.containsKey(name)) return false;
+		else references.put(name, new Reference(socket.getInetAddress().getHostName(), socket.getPort()));
+		
+		return true;
 	}
 	
 	public synchronized Object resolve(String name)
 	{
-		System.out.println("resolve called: \nName: " + name);
-	return stubs.get(name);
+		System.out.println("resolve in gns called: \nName: " + name);
+	return references.get(name);
 	}
 	
 	
-	/*
-	 * DS zum Speichern von Objektreferenzen
-	 */
 	private class Reference {
 		String hostname;
 		int port;

@@ -28,6 +28,8 @@ public class Dispatcher extends Thread {
 		this.hostname = socket.getInetAddress().getHostName();
 		this.port = socket.getPort();
 
+		System.out.println("Dispatcher got Something from " + hostname + ", port: " + port);
+		
 		try {
 			reader = new BufferedReader(new InputStreamReader(
 					socket.getInputStream()));
@@ -40,18 +42,19 @@ public class Dispatcher extends Thread {
 	synchronized void handleRequest(String request) {
 		String[] requestAry = request.split("|");
 		Object answer = null;
-
-		switch (requestAry[2]) {
-		case "resolve":
-			answer = objectPool.resolve(requestAry[3]);
-			try {
-				socket.getOutputStream().write((requestAry[2].toString() + "|" + answer).getBytes());
-			} catch (IOException e) {
-				e.printStackTrace();
+		try {
+			switch (requestAry[2]) {
+			case "resolve":
+				answer = objectPool.resolve(requestAry[3]);
+				socket.getOutputStream().write((requestAry[2].toString() + "|" + answer + "\n").getBytes());
+			
+			case "rebind":
+				boolean result = objectPool.rebind(requestAry[2], socket);
+				if(result) socket.getOutputStream().write(("Success" + "\n").getBytes()) ;
+				else socket.getOutputStream().write(("Error" + "\n").getBytes());
 			}
-
-		case "rebind":
-			objectPool.rebind(requestAry[2], socket);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 
 	}
