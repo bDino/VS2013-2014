@@ -19,10 +19,11 @@ public class ObjectPool {
 		return true;
 	}
 	
-	public synchronized Object resolve(String name)
+	public synchronized String resolve(String name)
 	{
 		System.out.println("resolve in gns called: \nName: " + name);
-	return references.get(name);
+		Reference ref = references.get(name);
+		return (ref.hostname + "#" + ref.port);
 	}
 	
 	

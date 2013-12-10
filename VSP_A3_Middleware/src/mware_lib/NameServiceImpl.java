@@ -44,7 +44,7 @@ public class NameServiceImpl extends NameServiceImplBase
 		if (this.socket == null || this.socket.isClosed()) {
 			try {
 				initializeConnection();
-				out.write(("rebind" + "#" + servant.getClass().getName() + "#" + name + "\n").getBytes());
+				out.write(("rebind" + "#" + servant.getClass().getSimpleName() + "#" + name + "\n").getBytes());
 				System.out.println(answerReader.readLine());
 				closeAllConnections();
 			} catch (IOException e) {
@@ -72,13 +72,13 @@ public class NameServiceImpl extends NameServiceImplBase
 
 		try {
 			out.write(("resolve#"+name + "\n").getBytes());
-			answer = answerReader.readLine().split("#");
+			answer = answerReader.readLine().replace(",","").split("#");
 			closeAllConnections();
 		} catch (IOException e) {
 			e.printStackTrace();
 			closeAllConnections();
 		}
-		return new Stub(answer[0],answer[1],Integer.parseInt(answer[2]));
+		return new Stub(name,answer[0],Integer.parseInt(answer[1]));
 	}
 
 	public void closeAllConnections() 

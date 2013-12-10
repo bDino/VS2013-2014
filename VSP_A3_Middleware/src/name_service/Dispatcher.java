@@ -52,12 +52,13 @@ public class Dispatcher extends Thread {
 				System.out.println("resolve called in Dispatcher\n");
 				answer = objectPool.resolve(requestAry[1]);
 				socket.getOutputStream().write((requestAry[1].toString() + "#" + answer + "\n").getBytes());
-			
+			break;
 			case "rebind":
-				System.out.println("rebind called in Dispatcher\n");
+				System.out.println("rebind called in Dispatcher\nRequestAry: " + Arrays.deepToString(requestAry));
 				boolean result = objectPool.rebind(requestAry[2], socket);
 				if(result) socket.getOutputStream().write(("Success" + "\n").getBytes()) ;
 				else socket.getOutputStream().write(("Error" + "\n").getBytes());
+			break;
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

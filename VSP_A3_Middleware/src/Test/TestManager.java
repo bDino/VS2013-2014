@@ -13,21 +13,17 @@ public class TestManager {
 
 	public static void main(String[] args) {
 		ObjectBroker broker = ObjectBroker.init(localhostName, GNSPort);
-		ObjectBroker broker2 = ObjectBroker.init(localhostName, GNSPort);
 		
 		NameServiceImplBase ns = broker.getNameService();
-		NameServiceImplBase ns2 = broker2.getNameService();
 		
 		ns.rebind(new MyManager(), "Manager_ONE");
-		ns2.rebind(new MyAccount(), "Account1");
+		ns.rebind(new MyAccount(),"Account_ONE");
 		
-		Object managerObj = ns2.resolve("Manager_ONE");
+		ManagerImplBase manager = ManagerImplBase.narrow_cast(ns.resolve("Manager_ONE"));
+		AccountImplBase account = AccountImplBase.narrow_cast(ns.resolve("Account_ONE"));
 		
-		ManagerImplBase manager = ManagerImplBase.narrow_cast(ns.resolve("Manager1"));
-
 		manager.createAccount("Account1", "foo");
 		
-		AccountImplBase account = AccountImplBase.narrow_cast(ns.resolve("Account1"));
 	}
 }
 
