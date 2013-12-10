@@ -22,7 +22,9 @@ public class ObjectPool {
 	{
 		System.out.println("resolve in gns called: \nName: " + name);
 		Reference ref = references.get(name);
-		return (ref.hostname + "#" + ref.port).toString();
+
+		if(ref != null) return (ref.hostname + "#" + ref.port).toString();
+		else return "";
 	}
 	
 	

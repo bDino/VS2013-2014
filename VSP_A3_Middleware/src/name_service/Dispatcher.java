@@ -49,7 +49,9 @@ public class Dispatcher extends Thread {
 			switch (requestAry[0]) {
 			case "resolve":
 				System.out.println("resolve called in Dispatcher\n");
-				socket.getOutputStream().write((requestAry[1].toString() + "#" + objectPool.resolve(requestAry[1]) + "\n").getBytes());
+				String answer = objectPool.resolve(requestAry[1]);
+				if(answer != "") socket.getOutputStream().write((requestAry[1].toString() + "#" + objectPool.resolve(requestAry[1]) + "\n").getBytes());
+				else socket.getOutputStream().write(("Error").getBytes()); 
 			break;
 			case "rebind":
 				System.out.println("rebind called in Dispatcher\nRequestAry: " + Arrays.deepToString(requestAry));

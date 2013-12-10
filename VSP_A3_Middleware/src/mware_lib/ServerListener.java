@@ -48,6 +48,7 @@ public class ServerListener extends Thread {
 			try {
 				ObjectOutputStream writer = new ObjectOutputStream(socket.getOutputStream());
 				writer.flush();
+				
 				ObjectInputStream reader = new ObjectInputStream(
 						socket.getInputStream());
 				

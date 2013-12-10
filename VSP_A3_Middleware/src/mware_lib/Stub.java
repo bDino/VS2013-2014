@@ -32,7 +32,7 @@ public class Stub {
 			reply = (Reply) reader.readObject();
 			socket.close();
 			
-			System.out.println("Stub Successfull invoked Method with Result: " + reply.getMessage());
+			System.out.println("Stub Successfull invoked Method with Result: " + reply.getMethodResult());
 			
 		} catch (UnknownHostException e) {
 			reply = new Reply("",null,e);
