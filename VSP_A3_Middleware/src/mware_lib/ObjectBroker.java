@@ -14,7 +14,7 @@ public class ObjectBroker {
 	static String serverListenerHost;
 	static ObjectBroker broker = null;
 	static NameService nameService;
-	static int gNsPort = 16437;
+	static int gNsPort = 9876;
 	static LocalObjectPool objectPool = new LocalObjectPool();
 	static boolean running = true;
 
@@ -60,7 +60,7 @@ public class ObjectBroker {
 			}
 
 			return ObjectBroker.broker;
-		}
+		}else init("localhost",gnsPort);
 
 		return null;
 	}
