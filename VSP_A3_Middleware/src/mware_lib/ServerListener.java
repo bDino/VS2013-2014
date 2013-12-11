@@ -41,6 +41,7 @@ public class ServerListener extends Thread {
 
 		WorkerThread(Socket s) {
 			this.socket = s;
+			this.setDaemon(true);
 		}
 
 		@Override

@@ -21,6 +21,7 @@ import java.util.Arrays;
 	public Dispatcher(Socket socket, ObjectPool objectPool) {
 		this.socket = socket;
 		this.objectPool = objectPool;
+		this.setDaemon(true);
 	}
 
 	@Override
