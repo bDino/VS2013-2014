@@ -4,7 +4,7 @@ import mware_lib.Reply;
 import mware_lib.Request;
 import mware_lib.Stub;
 
-public class AccountImpl extends AccountImplBase {
+class AccountImpl extends AccountImplBase {
 
 	Stub stub;
 

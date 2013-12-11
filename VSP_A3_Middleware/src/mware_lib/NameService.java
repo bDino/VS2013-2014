@@ -1,6 +1,6 @@
 package mware_lib;
 
-public abstract class NameServiceImplBase {
+public abstract class NameService {
 
 	/**
 	* Registers a remote object / service for name

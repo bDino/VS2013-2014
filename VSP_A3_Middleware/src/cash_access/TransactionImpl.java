@@ -5,7 +5,7 @@ import mware_lib.Request;
 import mware_lib.Stub;
 
 
-public class TransactionImpl extends TransactionImplBase {
+class TransactionImpl extends TransactionImplBase {
 
 	Stub stub;
 	

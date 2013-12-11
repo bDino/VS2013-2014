@@ -8,7 +8,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 // CommunikationFormat: [ClassType|ObjectName|ObjectMethod|MethodParamObjectArray|ParamClassArray|SUCCESS/ERROR]
-public class NameServiceImpl extends NameServiceImplBase {
+public class NameServiceImpl extends NameService {
 
 	String gnsServiceName;
 	int gnsPort;
@@ -64,16 +64,13 @@ public class NameServiceImpl extends NameServiceImplBase {
 	public Object resolve(String name) {
 		System.out.println("NameService resolve called: - " + name);
 		String[] answer = null;
+		Stub result = null;
 
 		if (this.socket == null || this.socket.isClosed()) {
 			try {
 				initializeConnection();
-				closeAllConnections();
 
-				out.write(("resolve#" + name + "\n").getBytes());
-				answer = answerReader.readLine().replace(",", "").split("#");
-
-				closeAllConnections();
+				
 			} catch (IOException e) {
 				e.printStackTrace();
 				closeAllConnections();
@@ -81,7 +78,25 @@ public class NameServiceImpl extends NameServiceImplBase {
 
 		}
 		
-		return new Stub(name, answer[1], Integer.parseInt(answer[2]));		
+		try {
+			out.write(("resolve#" + name + "\n").getBytes());
+			answer = answerReader.readLine().replace(",", "").split("#");
+		} catch (IOException e) {
+			e.printStackTrace();
+			closeAllConnections();
+		}
+		
+
+		closeAllConnections();
+		
+		if (answer[0].equals("Success")) {
+            System.out.println("resolved "+ name);
+            result = new Stub(name, answer[2], Integer.parseInt(answer[3]));
+        } else {
+            System.err.println(name +" cannot be resolved.\n");
+        }
+		return result;
+		
 	}
 
 	public void closeAllConnections() {
@@ -90,8 +105,7 @@ public class NameServiceImpl extends NameServiceImplBase {
 			in.close();
 			out.close();
 		} catch (IOException e) {
-			System.out
-					.println("Error closing Connections: \n" + e.getMessage());
+			System.out.println("Error closing Connections: \n" + e.getMessage());
 		}
 
 	}

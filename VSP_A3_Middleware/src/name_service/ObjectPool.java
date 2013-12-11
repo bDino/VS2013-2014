@@ -3,7 +3,7 @@ package name_service;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ObjectPool {
+ class ObjectPool {
 
 	Map<String, Reference> references = new HashMap<String, Reference>();
 	

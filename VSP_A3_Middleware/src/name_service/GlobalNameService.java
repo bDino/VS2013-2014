@@ -6,9 +6,9 @@ import java.net.ServerSocket;
 /*
  * Server-side Client Request Handler
  */
-public class GlobalNameService {
+class GlobalNameService {
 
-	static final int defaultPort = 16437;
+	static final int defaultPort = 9876;
 	static int listenPort;
 	static ObjectPool objectPool = new ObjectPool();
 	static ServerSocket socket = null;

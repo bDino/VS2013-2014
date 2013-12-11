@@ -13,7 +13,7 @@ public class ObjectBroker {
 	static int serverListenerPort;
 	static String serverListenerHost;
 	static ObjectBroker broker = null;
-	static NameServiceImplBase nameService;
+	static NameService nameService;
 	static int gNsPort = 16437;
 	static LocalObjectPool objectPool = new LocalObjectPool();
 	static boolean running = true;
@@ -21,7 +21,7 @@ public class ObjectBroker {
 	/**
 	 * @return an Implementation for a local NameService
 	 */
-	public NameServiceImplBase getNameService() {
+	public NameService getNameService() {
 		return nameService;
 	}
 
@@ -52,7 +52,7 @@ public class ObjectBroker {
 				ObjectBroker.gnsPort = port;
 				ObjectBroker.broker = (ObjectBroker.broker == null ? new ObjectBroker()
 						: ObjectBroker.broker);
-				nameService = (NameServiceImplBase) new NameServiceImpl(serviceName, port,objectPool,serverListenerPort,serverListenerHost);
+				nameService = (NameService) new NameServiceImpl(serviceName, port,objectPool,serverListenerPort,serverListenerHost);
 			
 				new ServerListener(sSocket,ObjectBroker.broker,objectPool).start();
 			} catch (IOException e) {

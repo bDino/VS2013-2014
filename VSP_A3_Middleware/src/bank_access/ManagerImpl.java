@@ -6,7 +6,7 @@ import mware_lib.Reply;
 import mware_lib.Request;
 import mware_lib.Stub;
 
-public class ManagerImpl extends ManagerImplBase{
+class ManagerImpl extends ManagerImplBase{
 
 	Stub stub;
 	
