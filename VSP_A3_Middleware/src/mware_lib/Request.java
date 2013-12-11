@@ -13,7 +13,6 @@ public class Request implements Serializable{
 	 private Object[] ary;
 	 private Object[] paramAry;
 	 private Class<?>[] paramClassAry;
-	 private String successError;
 	
 	public Request(String objectName, String methodName, Object[] paramAry, Class<?>[] paramClassAry)
 	{
