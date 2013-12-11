@@ -10,7 +10,7 @@ public abstract class AccountImplBase {
 	public abstract double getBalance();
 	
 	//TODO: Exception werfen!
-	public static AccountImplBase narrow_cast(Object gor) 
+	public static AccountImplBase narrowCast(Object gor) 
 	{
 		if(gor instanceof Stub)
 			return (AccountImplBase) new AccountImpl((Stub) gor);

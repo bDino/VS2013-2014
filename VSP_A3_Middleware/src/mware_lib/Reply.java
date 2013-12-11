@@ -31,7 +31,7 @@ public class Reply implements Serializable{
 
 	public boolean isInvalid()
 	{
-		return exception.equals(null);
+		return exception != null;
 	}
 	
 	public Exception getException()

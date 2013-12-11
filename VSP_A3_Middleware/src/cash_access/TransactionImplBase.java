@@ -10,7 +10,7 @@ public abstract class TransactionImplBase {
 	public abstract double getBalance(String accountId) throws InvalidParamException;
 
 	//TODO: Exception werfen!
-	public static TransactionImplBase narrow_cast(Object gor) 
+	public static TransactionImplBase narrowCast(Object gor) 
 	{
 		if(gor instanceof Stub)
 			return (TransactionImplBase) new TransactionImpl((Stub) gor);

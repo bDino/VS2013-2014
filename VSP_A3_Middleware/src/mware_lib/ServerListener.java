@@ -7,6 +7,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 
 public class ServerListener extends Thread {
 	ServerSocket serverSocket;
@@ -67,10 +68,12 @@ public class ServerListener extends Thread {
 				method.setAccessible(true);
 				Object result = method.invoke(s, params);
 
+				System.out.println("SERVERLISTENER: Method " + methodName + " with Params: "+ Arrays.deepToString(params) + 
+						" successfully invoked on Object " + name + " with result: "+result);
+				
 				writer.writeObject(new Reply("Success",result,null));
 				writer.flush();
 				
-				System.out.println("Method " + methodName + " successfully invoked on Object " + name);
 								
 				reader.close();
 				writer.close();
