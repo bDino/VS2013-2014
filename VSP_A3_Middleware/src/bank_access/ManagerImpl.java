@@ -22,11 +22,11 @@ class ManagerImpl extends ManagerImplBase{
 		Reply reply = stub.delegateMethod(request);
 		
 		if(reply.isInvalid()){
-			RuntimeException e = (RuntimeException) reply.getException();
+			RuntimeException e = new RuntimeException(reply.getException().getMessage());
 			throw e;
 		}
 		else {
-			return reply.getMessage();
+			return reply.getMethodResult().toString();
 		}
 	}
 

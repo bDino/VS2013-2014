@@ -66,25 +66,34 @@ public class NameServiceImpl extends NameService {
 		String[] answer = null;
 		Stub result = null;
 
-		if (this.socket == null || this.socket.isClosed()) {
-			try {
-				initializeConnection();
-
-				
-			} catch (IOException e) {
-				e.printStackTrace();
-				closeAllConnections();
-			}
-
-		}
-		
 		try {
+			initializeConnection();
 			out.write(("resolve#" + name + "\n").getBytes());
 			answer = answerReader.readLine().replace(",", "").split("#");
 		} catch (IOException e) {
 			e.printStackTrace();
 			closeAllConnections();
 		}
+		
+//		if (this.socket == null || this.socket.isClosed()) {
+//			try {
+//				initializeConnection();
+//
+//				
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//				closeAllConnections();
+//			}
+//
+//		}
+//		
+//		try {
+//			out.write(("resolve#" + name + "\n").getBytes());
+//			answer = answerReader.readLine().replace(",", "").split("#");
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//			closeAllConnections();
+//		}
 		
 
 		closeAllConnections();

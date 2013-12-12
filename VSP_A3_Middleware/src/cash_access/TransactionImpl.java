@@ -39,7 +39,7 @@ class TransactionImpl extends TransactionImplBase {
 	public void withdraw(String accountId, double amount)
 			throws InvalidParamException, OverdraftException {
 		
-		if(getBalance(accountId) < amount) throw new OverdraftException("Balance is lower then the amount");
+		//if(getBalance(accountId) < amount) throw new OverdraftException("Balance is lower then the amount");
 		
 		Object[] args = new Object[]{accountId, amount};
 		Class<?>[] classes = new Class[]{String.class, double.class};
@@ -50,8 +50,9 @@ class TransactionImpl extends TransactionImplBase {
 			Exception e = reply.getException();
 			if (e instanceof InvalidParamException){
 				throw new InvalidParamException(e.getMessage());
-			}
-			else{
+			}else if (e instanceof OverdraftException || e instanceof bank_access.OverdraftException){
+				throw new OverdraftException(e.getMessage());
+			}else{
 				throw new RuntimeException(e.getMessage());
 			}
 		}	
@@ -77,7 +78,7 @@ class TransactionImpl extends TransactionImplBase {
 		}
 		else
 		{
-			double value = Double.parseDouble(reply.getMessage());
+			double value = Double.parseDouble(reply.getMethodResult().toString());
 			return value;
 		}
 	}
