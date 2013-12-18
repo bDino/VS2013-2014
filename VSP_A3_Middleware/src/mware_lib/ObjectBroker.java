@@ -31,9 +31,6 @@ public class ObjectBroker {
 	 */
 	public void shutDown() {
 		ObjectBroker.running = false;
-		try {
-			sListener.interrupt();
-		} catch(SecurityException ex) { ex.printStackTrace(); }
 		ObjectBroker.broker = null;
 		
 	}
