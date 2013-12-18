@@ -21,6 +21,7 @@ public class ServerListener extends Thread {
 		this.serverSocket = socket;
 		this.broker = broker;
 		this.objectPool = objPool;
+		this.setDaemon(true);
 	}
 
 	@Override
