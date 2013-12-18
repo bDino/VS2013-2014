@@ -17,6 +17,7 @@ public class ObjectBroker {
 	static int gNsPort = 9876;
 	static LocalObjectPool objectPool = new LocalObjectPool();
 	static boolean running = true;
+	static ServerListener sListener = null;
 
 	/**
 	 * @return an Implementation for a local NameService
@@ -30,6 +31,9 @@ public class ObjectBroker {
 	 */
 	public void shutDown() {
 		ObjectBroker.running = false;
+		try {
+			sListener.interrupt();
+		} catch(SecurityException ex) { ex.printStackTrace(); }
 		ObjectBroker.broker = null;
 		
 	}
@@ -56,7 +60,8 @@ public class ObjectBroker {
 						: ObjectBroker.broker);
 				nameService = (NameService) new NameServiceImpl(serviceName, port,objectPool,serverListenerPort,serverListenerHost);
 			
-				new ServerListener(sSocket,ObjectBroker.broker,objectPool).start();
+				sListener = new ServerListener(sSocket,ObjectBroker.broker,objectPool);
+				sListener.start();
 			} catch (IOException e) {
 				System.out.println("Error initializing the ObjectBroker" + e.getMessage());
 			}
