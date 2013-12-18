@@ -54,6 +54,7 @@ public class ObjectBroker {
 				ObjectBroker.gnsPort = port;
 				ObjectBroker.broker = (ObjectBroker.broker == null ? new ObjectBroker()
 						: ObjectBroker.broker);
+				
 				nameService = (NameService) new NameServiceImpl(serviceName, port,objectPool,serverListenerPort,serverListenerHost);
 			
 				new ServerListener(sSocket,ObjectBroker.broker,objectPool).start();

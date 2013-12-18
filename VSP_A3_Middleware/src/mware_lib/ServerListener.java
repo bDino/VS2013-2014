@@ -21,6 +21,7 @@ public class ServerListener extends Thread {
 		this.serverSocket = socket;
 		this.broker = broker;
 		this.objectPool = objPool;
+		this.setName("Serverlistener");
 	}
 
 	@Override
@@ -36,6 +37,7 @@ public class ServerListener extends Thread {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		System.out.println("Serverlistener stops now");
 
 	}
 
