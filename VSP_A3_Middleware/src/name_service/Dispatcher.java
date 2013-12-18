@@ -11,7 +11,7 @@ import java.util.Arrays;
 /*
  * 
  */
- class Dispatcher extends Thread {
+public class Dispatcher extends Thread {
 	Socket socket = null;
 	int port;
 	String hostname;
@@ -21,7 +21,6 @@ import java.util.Arrays;
 	public Dispatcher(Socket socket, ObjectPool objectPool) {
 		this.socket = socket;
 		this.objectPool = objectPool;
-		this.setDaemon(true);
 	}
 
 	@Override
@@ -50,7 +49,7 @@ import java.util.Arrays;
 			case "resolve":
 				System.out.println("resolve called in Dispatcher\n");
 				String answer = objectPool.resolve(requestAry[1]);
-				if(answer != "") socket.getOutputStream().write(("Success#" + requestAry[1].toString() + "#" + objectPool.resolve(requestAry[1]) + "\n").getBytes());
+				if(answer != "") socket.getOutputStream().write((requestAry[1].toString() + "#" + objectPool.resolve(requestAry[1]) + "\n").getBytes());
 				else socket.getOutputStream().write(("Error").getBytes()); 
 			break;
 			case "rebind":

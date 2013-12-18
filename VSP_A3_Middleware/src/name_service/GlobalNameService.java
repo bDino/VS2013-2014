@@ -39,6 +39,6 @@ class GlobalNameService {
 
 		}
 
-	public static void shutdown() { running = false; }
+	public static void shutDown() { running = false; }
 
 }

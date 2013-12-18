@@ -3,7 +3,6 @@ package mware_lib;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -21,7 +20,7 @@ public class ServerListener extends Thread {
 		this.serverSocket = socket;
 		this.broker = broker;
 		this.objectPool = objPool;
-		this.setName("Serverlistener");
+		this.setDaemon(true);
 	}
 
 	@Override
@@ -33,11 +32,12 @@ public class ServerListener extends Thread {
 						+ serverSocket.getLocalPort());
 				new WorkerThread(serverSocket.accept()).start();
 			}
+			
 			serverSocket.close();
+			this.interrupt();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		System.out.println("Serverlistener stops now");
 
 	}
 
