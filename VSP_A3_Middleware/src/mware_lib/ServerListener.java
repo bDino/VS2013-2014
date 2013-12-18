@@ -26,15 +26,18 @@ public class ServerListener extends Thread {
 
 	@Override
 	public void run() {
-		while (ObjectBroker.running) {
-			try {
+
+		try {
+			while (ObjectBroker.running) {
 				System.out.println("ServerListener started on Port: "
 						+ serverSocket.getLocalPort());
 				new WorkerThread(serverSocket.accept()).start();
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
+			serverSocket.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
+
 	}
 
 	private class WorkerThread extends Thread {
@@ -49,41 +52,56 @@ public class ServerListener extends Thread {
 		public void run() {
 			System.out.println("ServerListenerThread running....");
 			try {
-				ObjectOutputStream writer = new ObjectOutputStream(socket.getOutputStream());
+				ObjectOutputStream writer = new ObjectOutputStream(
+						socket.getOutputStream());
 				writer.flush();
-				
+
 				ObjectInputStream reader = new ObjectInputStream(
 						socket.getInputStream());
-				
+
 				System.out.println("ServerListener got Request\n");
-				
-				
+
 				Request request = (Request) reader.readObject();
 				String name = request.getObjectName();
 				String methodName = request.getMethodName();
 				Object[] params = request.getParamAry();
 				Class<?>[] classParam = request.getParamClassAry();
-				
+
 				Object s = objectPool.getLocalSkeleton(name);
 
 				Method method = s.getClass().getMethod(methodName, classParam);
 				method.setAccessible(true);
-				Object result = method.invoke(s, params);
+				try {
+					Object result = method.invoke(s, params);
 
-				System.out.println("SERVERLISTENER: Method " + methodName + " with Params: "+ Arrays.deepToString(params) + 
-						" successfully invoked on Object " + name + " with result: "+result);
-				
-				writer.writeObject(new Reply("Success",result,null));
-				writer.flush();
-				
-								
+					System.out.println("SERVERLISTENER: Method " + methodName
+							+ " with Params: " + Arrays.deepToString(params)
+							+ " successfully invoked on Object " + name
+							+ " with result: " + result);
+
+					writer.writeObject(new Reply("Success", result, null));
+					writer.flush();
+				} catch (Exception e) {
+					System.out
+							.println("SERVERLISTENER: Exception beim invoke der Methode "
+									+ methodName
+									+ " with Params: "
+									+ Arrays.deepToString(params));
+					Exception e1 = (Exception) e.getCause();
+					writer.writeObject(new Reply("Error", null, e1));
+					writer.flush();
+				}
+
 				reader.close();
 				writer.close();
-			} catch (IOException e) { e.printStackTrace();
-			} catch (ClassNotFoundException e) { e.printStackTrace();
-			} catch (NoSuchMethodException e) { e.printStackTrace();	
-			} catch (InvocationTargetException e) { e.printStackTrace(); 
-			} catch (IllegalAccessException e) { e.printStackTrace(); }		
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			} catch (NoSuchMethodException e) {
+				e.printStackTrace();
+
+			}
 		}
 	}
 

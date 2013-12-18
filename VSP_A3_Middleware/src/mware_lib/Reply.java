@@ -12,9 +12,9 @@ public class Reply implements Serializable{
 	Exception exception;
 	Object result;
 	
-	public Reply(String msg,Object result, Exception e)
+	public Reply(String success, Object result, Exception e)
 	{
-		this.answer = msg;
+		this.answer = success;
 		this.result = result;
 		this.exception = e;
 	}
